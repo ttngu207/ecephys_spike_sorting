@@ -623,7 +623,7 @@ class processing_session():
             command_string = "robocopy "+ source +" "+destination +r" /e /xc /xn /xo"
 
             if 'cww' in module:
-                command_string = command_string+ ' /xf probe_info.json'
+                command_string = command_string+ '/xf probe_info.json'
             self.logger_dict[probe].info(command_string)
             self.process_dict[probe][module] = subprocess.Popen(command_string)#,stdout = subprocess.PIPE,stderr = subprocess.PIPE))
                 #shutil.copytree(extracted_data_location, new_location)
@@ -1046,8 +1046,7 @@ class processing_session():
                         logging.error('Failed to retrieve surface channel', exc_info=True)
                     for channel in range(384):
                         max_chan = min(383, surface_channel+50)
-                        min_chan = min(surface_channel-80, 250)
-                        if not(channel in range(min_chan, max_chan)):
+                        if not(channel in range(surface_channel-80, max_chan)):
                             mask[channel] = False
                 edit_mask(probe, mask, 'kilosort')
             except Exception as E:
@@ -1088,7 +1087,7 @@ class processing_session():
                     mask = probe_json['mask']
                 else:
                     mask = 384*[True]
-                if sum(not(channel) for channel in mask)>0:
+                if sum(not(channel) for channel in mask)>30:
                     mask = 384*[True]
                 references = [191]
                 for ref in references:
