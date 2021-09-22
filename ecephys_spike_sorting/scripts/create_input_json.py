@@ -17,7 +17,16 @@ def create_samba_directory(samba_server, samba_share):
 
     return data_dir
 
-def createInputJson(output_file, 
+def createInputJson(
+                    ecephys_directory,
+                    kilosort_repository,
+                    KS2ver,
+                    npy_matlab_repository,
+                    catGTPath,
+                    tPrime_path,
+                    cWaves_path,
+                    kilosort_output_tmp,
+                    output_file, 
                     npx_directory=None, 
                     continuous_file = None,
                     spikeGLX_data=True,
@@ -57,32 +66,39 @@ def createInputJson(output_file,
                     ks_LTseed = 1,
                     ks_templateRadius_um = 163,
                     c_Waves_snr_um = 160,
-                    qm_isi_thresh = 1.5/1000                    
+                    qm_isi_thresh = 1.5/1000
                     ):
 
     # hard coded paths to code on your computer and system
-    ecephys_directory = r'D:\ecephys_fork\ecephys_spike_sorting\ecephys_spike_sorting'
-    
+    # ecephys_directory = r'D:\ecephys_fork\ecephys_spike_sorting\ecephys_spike_sorting'
+    ecephys_directory = ecephys_directory
+
     # location of kilosor respository and kilosort version
 
-    kilosort_repository = r'C:\Users\labadmin\Documents\jic\KS3_fork\Kilosort2'
-    KS2ver = '2.0'      # must equal '3.0', '2.5' or '2.0', and match the kiilosort_repository
-    
+    # kilosort_repository = r'C:\Users\labadmin\Documents\jic\KS3_fork\Kilosort2'
+    # KS2ver = '2.0'      # must equal '3.0', '2.5' or '2.0', and match the kiilosort_repository
+    kilosort_repository = kilosort_repository
+    KS2ver = KS2ver
+
     # KS 3.0 does not yet output pcs.
     if KS2ver == '3.0':
         include_pcs = False  # set to false for KS2ver = '3.0'
     else:
         include_pcs = True
     
-    npy_matlab_repository = r'C:\Users\labadmin\Documents\jic\npy-matlab-master'
-    catGTPath = r'C:\Users\labadmin\Documents\jic\CatGT-win'
-    tPrime_path=r'C:\Users\labadmin\Documents\jic\TPrime-win'
-    cWaves_path=r'C:\Users\labadmin\Documents\jic\C_Waves-win'
-    
+    #npy_matlab_repository = r'C:\Users\labadmin\Documents\jic\npy-matlab-master'
+    #catGTPath = r'C:\Users\labadmin\Documents\jic\CatGT-win'
+    #tPrime_path=r'C:\Users\labadmin\Documents\jic\TPrime-win'
+    #cWaves_path=r'C:\Users\labadmin\Documents\jic\C_Waves-win'
+    npy_matlab_repository = npy_matlab_repository
+    catGTPath = catGTPath
+    tPrime_path = tPrime_path
+    cWaves_path = cWaves_path
+
      
     # for config files and kilosort working space
-    kilosort_output_tmp = r'D:\kilosort_datatemp' 
-    
+    # kilosort_output_tmp = r'D:\kilosort_datatemp' 
+    kilosort_output_tmp = kilosort_output_tmp
     
     # derived directory names
     
