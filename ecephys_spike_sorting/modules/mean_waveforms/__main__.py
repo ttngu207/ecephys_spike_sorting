@@ -85,8 +85,21 @@ def calculate_mean_waveforms(args):
                                 
         print(cwaves_cmd)
         
+        cmd_parts = list()
+        cmd_parts.extend([exe_path, ' -spikeglx_bin=',  spikeglx_bin])
+        cmd_parts.extend([' -clus_table_npy=', clus_table_npy])
+        cmd_parts.extend([' -clus_time_npy=', clus_time_npy])
+        cmd_parts.extend([' -clus_lbl_npy=', clus_lbl_npy])
+        cmd_parts.extend([' -dest=', dest])
+        cmd_parts.extend([' -samples_per_spike=', repr(args['mean_waveform_params']['samples_per_spike'])])
+        cmd_parts.extend([' -pre_samples=', repr(args['mean_waveform_params']['pre_samples'])])
+        cmd_parts.extend([' -num_spikes=', repr(args['mean_waveform_params']['spikes_per_epoch'])])
+        cmd_parts.extend([' -snr_radius=', repr(args['mean_waveform_params']['snr_radius'])])
+        print(cmd_parts)
+
         # make the C_Waves call
-        subprocess.call(cwaves_cmd)
+        #subprocess.call(cwaves_cmd)
+        subprocess.call(cmd_parts)
         
         # for first version, retain original names
         if clu_version == 0:
