@@ -8,6 +8,7 @@ from helpers import log_from_json
 from helpers import run_one_probe
 from create_input_json import createInputJson
 
+from dotenv import load_dotenv
 
 modules = ['kilosort_helper',
            'kilosort_postprocessing',
@@ -22,6 +23,7 @@ def run_probe(prb, json_directory, npx_directory,
               catGT_loccar_min_um, catGT_loccar_max_um,
               catGT_cmd_string,
               ks_Th, refPerMS,
+              dot_env_path=None,
               ecephys_directory=None,
               kilosort_repository=None,
               KS2ver=None,
@@ -39,6 +41,19 @@ def run_probe(prb, json_directory, npx_directory,
               c_Waves_snr_um=160,
               ni_present=True,
               ni_extract_string=None):
+    # load external tool path from .env if not given from .json
+    if dot_env_path and os.path.exists(dot_env_path):
+        load_dotenv(dot_env_path)
+        ecephys_directory=os.getenv('ecephys_directory') if ~ecephys_directory else None
+        kilosort_repository=os.getenv('kilosort_repository') if ~kilosort_repository else None
+        KS2ver=os.getenv('KS2ver') if ~KS2ver else None
+        npy_matlab_repository=os.getenv('npy_matlab_repository') if ~npy_matlab_repository else None
+        catGTPath=os.getenv('catGTPath') if ~catGTPath else None
+        tPrime_path=os.getenv('tPrime_path') if ~tPrime_path else None
+        cWaves_path=os.getenv('cWaves_path') if ~cWaves_path else None
+        kilosort_output_tmp=os.getenv('kilosort_output_tmp') if ~kilosort_output_tmp else None
+    print(kilosort_output_tmp)
+
     # build path to the first probe folder; look into that folder
     # to determine the range of trials if the user specified t limits as
     # start and end
