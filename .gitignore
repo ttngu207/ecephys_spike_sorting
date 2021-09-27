@@ -84,4 +84,4 @@ target/
 .DS_Store
 
 #temp config file
-/Users/yam/Documents/Projects/matlab-npx/ecephys_spike_sorting/ecephys_spike_sorting/scripts/config
+ecephys_spike_sorting/scripts/config
