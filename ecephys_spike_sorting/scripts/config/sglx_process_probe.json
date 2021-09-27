@@ -7,7 +7,7 @@
     "gate_str": "0",
     "trigger_str": "0,0",
     "run_CatGT": "True",
-    "catGT_dest": "/home/ubuntu/neuropixel/data_for_ephys",
+    "catGT_dest": "/home/ubuntu/neuropixel/data_for_ecephys/subject1_session1",
     "catGT_car_mode": "gblcar",
     "catGT_loccar_min_um": 40,
     "catGT_loccar_max_um": 160,
