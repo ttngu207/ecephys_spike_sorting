@@ -189,7 +189,8 @@ def run_probe(prb, json_directory, npx_directory,
                          logFullPath)
 
 
-if __name__ == '__main__':
+#if __name__ == '__main__':
+def main():
     json_fp = sys.argv[1]
 
     with open(json_fp) as f:
