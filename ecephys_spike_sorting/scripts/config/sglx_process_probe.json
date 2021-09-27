@@ -1,5 +1,5 @@
 {
-    "dot_env_path": "config/.env",
+    "dot_env_path": "/home/ubuntu/neuropixel/ecephys_spike_sorting/ecephys_spike_sorting/scripts/config/.env",
     "prb": "0",
     "json_directory": "/home/ubuntu/neuropixel/ecephys_spike_sorting/ecephys_spike_sorting/scripts/config",
     "npx_directory": "/home/ubuntu/neuropixel/data_for_ecephys/subject1_session1",
