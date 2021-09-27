@@ -82,3 +82,6 @@ target/
 
 # macOS
 .DS_Store
+
+#temp config file
+ecephys_spike_sorting/scripts/config

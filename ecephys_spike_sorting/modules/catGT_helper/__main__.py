@@ -18,7 +18,7 @@ def run_CatGT(args):
     if sys.platform.startswith('win'):
         # build windows command line
         catGTexe_fullpath = catGTPath.replace('\\', '/') + "/runit.bat"
-    elif sys.platform.starstwith('linux'):
+    elif sys.platform.startswith('linux'):
         catGTexe_fullpath = catGTPath.replace('\\', '/') + "/runit.sh"
     else:
         print('unknown system, cannot run CatGt')
@@ -59,7 +59,7 @@ def run_CatGT(args):
     print('CatGT command line:' + catGT_cmd)
     
     start = time.time()
-    subprocess.call(catGT_cmd)
+    subprocess.call(cmd_parts)
 
     execution_time = time.time() - start
     
