@@ -71,34 +71,27 @@ def createInputJson(
 
     # hard coded paths to code on your computer and system
     # ecephys_directory = r'D:\ecephys_fork\ecephys_spike_sorting\ecephys_spike_sorting'
-    ecephys_directory = ecephys_directory
+    # this is passed through arguements now
 
     # location of kilosor respository and kilosort version
 
     # kilosort_repository = r'C:\Users\labadmin\Documents\jic\KS3_fork\Kilosort2'
     # KS2ver = '2.0'      # must equal '3.0', '2.5' or '2.0', and match the kiilosort_repository
-    kilosort_repository = kilosort_repository
-    KS2ver = KS2ver
+    # these are passed through arguements now
 
     # KS 3.0 does not yet output pcs.
-    if KS2ver == '3.0':
-        include_pcs = False  # set to false for KS2ver = '3.0'
-    else:
-        include_pcs = True
+    include_pcs = KS2ver != '3.0'
     
     #npy_matlab_repository = r'C:\Users\labadmin\Documents\jic\npy-matlab-master'
     #catGTPath = r'C:\Users\labadmin\Documents\jic\CatGT-win'
     #tPrime_path=r'C:\Users\labadmin\Documents\jic\TPrime-win'
     #cWaves_path=r'C:\Users\labadmin\Documents\jic\C_Waves-win'
-    npy_matlab_repository = npy_matlab_repository
-    catGTPath = catGTPath
-    tPrime_path = tPrime_path
-    cWaves_path = cWaves_path
+    # these are passed through arguements now
 
      
     # for config files and kilosort working space
     # kilosort_output_tmp = r'D:\kilosort_datatemp' 
-    kilosort_output_tmp = kilosort_output_tmp
+    # this is passed through arguements now
     
     # derived directory names
     

@@ -45,15 +45,14 @@ def run_probe(prb, json_directory, npx_directory,
     # load external tool path from .env if not given from .json
     if dot_env_path and os.path.exists(dot_env_path):
         load_dotenv(dot_env_path)
-        ecephys_directory=ecephys_directory if ecephys_directory else os.getenv('ecephys_directory')
-        kilosort_repository=kilosort_repository if kilosort_repository else os.getenv('kilosort_repository')
-        KS2ver=KS2ver if KS2ver else os.getenv('KS2ver')
-        npy_matlab_repository=npy_matlab_repository if npy_matlab_repository else os.getenv('npy_matlab_repository')
-        catGTPath=catGTPath if catGTPath else os.getenv('catGTPath')
-        tPrime_path=tPrime_path if tPrime_path else os.getenv('tPrime_path')
-        cWaves_path=cWaves_path if cWaves_path else os.getenv('cWaves_path')
-        kilosort_output_tmp=kilosort_output_tmp if kilosort_output_tmp else os.getenv('kilosort_output_tmp') 
-    print(kilosort_output_tmp)
+        ecephys_directory=ecephys_directory or os.getenv('ecephys_directory')
+        kilosort_repository=kilosort_repository or os.getenv('kilosort_repository')
+        KS2ver=KS2ver or os.getenv('KS2ver')
+        npy_matlab_repository=npy_matlab_repository or os.getenv('npy_matlab_repository')
+        catGTPath=catGTPath or os.getenv('catGTPath')
+        tPrime_path=tPrime_path or os.getenv('tPrime_path')
+        cWaves_path=cWaves_path or os.getenv('cWaves_path')
+        kilosort_output_tmp=kilosort_output_tmp or os.getenv('kilosort_output_tmp') 
 
     # build path to the first probe folder; look into that folder
     # to determine the range of trials if the user specified t limits as
