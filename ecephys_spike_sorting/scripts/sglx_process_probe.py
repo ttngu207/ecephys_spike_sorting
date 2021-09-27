@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 import json
+from dotenv import load_dotenv
 
 sys.path.append(os.path.dirname(__file__))
 from helpers import SpikeGLX_utils
@@ -9,7 +10,6 @@ from helpers import log_from_json
 from helpers import run_one_probe
 from create_input_json import createInputJson
 
-from dotenv import load_dotenv
 
 modules = ['kilosort_helper',
            'kilosort_postprocessing',
