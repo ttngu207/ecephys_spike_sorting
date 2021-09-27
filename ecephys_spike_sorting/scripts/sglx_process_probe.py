@@ -3,6 +3,7 @@ import sys
 import subprocess
 import json
 
+sys.path.append(os.path.dirname(__file__))
 from helpers import SpikeGLX_utils
 from helpers import log_from_json
 from helpers import run_one_probe
