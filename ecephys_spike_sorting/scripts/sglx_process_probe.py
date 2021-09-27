@@ -99,10 +99,7 @@ def run_probe(prb, json_directory, npx_directory,
     # kilosort_postprocessing and noise_templates modules alter the files
     # that are input to phy. If using these modules, keep a copy of the
     # original phy output
-    if ('kilosort_postprocessing' in modules) or ('noise_templates' in modules):
-        ks_make_copy = True
-    else:
-        ks_make_copy = False
+    ks_make_copy = 'kilosort_postprocessing' in modules or 'noise_templates' in modules
     kilosort_output_dir = os.path.join(data_directory, outputName)
     print(data_directory)
     print(continuous_file)
