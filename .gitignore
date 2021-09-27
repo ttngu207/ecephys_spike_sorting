@@ -82,3 +82,6 @@ target/
 
 # macOS
 .DS_Store
+
+#temp config file
+SC*.json
