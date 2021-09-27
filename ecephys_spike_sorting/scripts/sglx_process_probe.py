@@ -53,7 +53,6 @@ def run_probe(prb, json_directory, npx_directory,
         tPrime_path=tPrime_path or os.getenv('tPrime_path')
         cWaves_path=cWaves_path or os.getenv('cWaves_path')
         kilosort_output_tmp=kilosort_output_tmp or os.getenv('kilosort_output_tmp') 
-    print(kilosort_output_tmp)
 
     # build path to the first probe folder; look into that folder
     # to determine the range of trials if the user specified t limits as
