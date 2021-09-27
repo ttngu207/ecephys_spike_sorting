@@ -24,7 +24,6 @@ def run_probe(prb, json_directory, npx_directory,
               catGT_loccar_min_um, catGT_loccar_max_um,
               catGT_cmd_string,
               ks_Th, refPerMS,
-              dot_env_path=None,
               ecephys_directory=None,
               kilosort_repository=None,
               KS2ver=None,
@@ -43,7 +42,8 @@ def run_probe(prb, json_directory, npx_directory,
               ni_present=True,
               ni_extract_string=None):
     # load external tool path from .env if not given from .json
-    if dot_env_path and os.path.exists(dot_env_path):
+    dot_env_path = "config/sglx_process_probe.json"
+    if os.path.exists(dot_env_path):
         load_dotenv(dot_env_path)
         ecephys_directory=ecephys_directory or os.getenv('ecephys_directory')
         kilosort_repository=kilosort_repository or os.getenv('kilosort_repository')
@@ -53,6 +53,7 @@ def run_probe(prb, json_directory, npx_directory,
         tPrime_path=tPrime_path or os.getenv('tPrime_path')
         cWaves_path=cWaves_path or os.getenv('cWaves_path')
         kilosort_output_tmp=kilosort_output_tmp or os.getenv('kilosort_output_tmp') 
+    print(kilosort_output_tmp)
 
     # build path to the first probe folder; look into that folder
     # to determine the range of trials if the user specified t limits as
