@@ -155,4 +155,4 @@ if __name__ == '__main__':
     with open(json_fp) as f:
         kwargs = json.load(f)
 
-    run_one_probe(**kwargs)
+    run_probe(**kwargs)
