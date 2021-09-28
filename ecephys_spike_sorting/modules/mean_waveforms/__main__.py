@@ -95,7 +95,6 @@ def calculate_mean_waveforms(args):
         cmd_parts.append(' -pre_samples='+repr(args['mean_waveform_params']['pre_samples']))
         cmd_parts.append(' -num_spikes='+repr(args['mean_waveform_params']['spikes_per_epoch']))
         cmd_parts.append(' -snr_radius='+repr(args['mean_waveform_params']['snr_radius']))
-        print(cmd_parts)
 
         # make the C_Waves call
         #subprocess.call(cwaves_cmd)
