@@ -2,7 +2,6 @@ import os
 import sys
 import subprocess
 import json
-from dotenv import load_dotenv
 
 sys.path.append(os.path.dirname(__file__))
 from helpers import SpikeGLX_utils
@@ -24,14 +23,7 @@ def run_probe(prb, json_directory, npx_directory,
               catGT_loccar_min_um, catGT_loccar_max_um,
               catGT_cmd_string,
               ks_Th, refPerMS,
-              ecephys_directory=None,
-              kilosort_repository=None,
               KS2ver=None,
-              npy_matlab_repository=None,
-              catGTPath=None,
-              tPrime_path=None,
-              cWaves_path=None,
-              kilosort_output_tmp=None,
               ks_remDup=0,
               ks_saveRez=1,
               ks_copy_fproc=0,
@@ -41,18 +33,6 @@ def run_probe(prb, json_directory, npx_directory,
               c_Waves_snr_um=160,
               ni_present=True,
               ni_extract_string=None):
-    # load external tool path from .env if not given from .json
-    dot_env_path = "config/sglx_process_probe.json"
-    if os.path.exists(dot_env_path):
-        load_dotenv(dot_env_path)
-        ecephys_directory=ecephys_directory or os.getenv('ecephys_directory')
-        kilosort_repository=kilosort_repository or os.getenv('kilosort_repository')
-        KS2ver=KS2ver or os.getenv('KS2ver')
-        npy_matlab_repository=npy_matlab_repository or os.getenv('npy_matlab_repository')
-        catGTPath=catGTPath or os.getenv('catGTPath')
-        tPrime_path=tPrime_path or os.getenv('tPrime_path')
-        cWaves_path=cWaves_path or os.getenv('cWaves_path')
-        kilosort_output_tmp=kilosort_output_tmp or os.getenv('kilosort_output_tmp') 
 
     # build path to the first probe folder; look into that folder
     # to determine the range of trials if the user specified t limits as
@@ -92,14 +72,7 @@ def run_probe(prb, json_directory, npx_directory,
     input_meta_fullpath = os.path.join(input_data_directory, metaName)
     print(input_meta_fullpath)
     createInputJson(catGT_input_json,
-                    ecephys_directory=ecephys_directory,
-                    kilosort_repository=kilosort_repository,
                     KS2ver=KS2ver,
-                    npy_matlab_repository=npy_matlab_repository,
-                    catGTPath=catGTPath,
-                    tPrime_path=tPrime_path,
-                    cWaves_path=cWaves_path,
-                    kilosort_output_tmp=kilosort_output_tmp,
                     npx_directory=npx_directory,
                     continuous_file=continuous_file,
                     kilosort_output_directory=catGT_dest,
@@ -136,14 +109,7 @@ def run_probe(prb, json_directory, npx_directory,
     print(continuous_file)
     print('ks_Th: ' + repr(ks_Th) + ' ,refPerMS: ' + repr(refPerMS))
     createInputJson(module_input_json,
-                    ecephys_directory=ecephys_directory,
-                    kilosort_repository=kilosort_repository,
                     KS2ver=KS2ver,
-                    npy_matlab_repository=npy_matlab_repository,
-                    catGTPath=catGTPath,
-                    tPrime_path=tPrime_path,
-                    cWaves_path=cWaves_path,
-                    kilosort_output_tmp=kilosort_output_tmp,
                     npx_directory=npx_directory,
                     continuous_file=continuous_file,
                     spikeGLX_data=True,
@@ -188,7 +154,6 @@ def run_probe(prb, json_directory, npx_directory,
                          logFullPath)
 
 
-#if __name__ == '__main__':
 def main():
     json_fp = sys.argv[1]
 
@@ -196,3 +161,7 @@ def main():
         kwargs = json.load(f)
 
     run_probe(**kwargs)
+
+
+if __name__ == '__main__':
+    main()
