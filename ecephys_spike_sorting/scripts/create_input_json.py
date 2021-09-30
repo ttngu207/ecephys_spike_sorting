@@ -1,4 +1,5 @@
 import os, io, json, sys
+from dotenv import load_dotenv
 
 if sys.platform == 'linux':
     import pwd
@@ -92,6 +93,10 @@ def createInputJson(
     # for config files and kilosort working space
     # kilosort_output_tmp = r'D:\kilosort_datatemp'
     # this is passed through arguements now
+
+    dot_env_path = "config/sglx_process_probe.json"
+    if os.path.exists(dot_env_path):
+        load_dotenv(dot_env_path)
 
     ecephys_directory = ecephys_directory or os.getenv('ecephys_directory')
     kilosort_repository = kilosort_repository or os.getenv('kilosort_repository')

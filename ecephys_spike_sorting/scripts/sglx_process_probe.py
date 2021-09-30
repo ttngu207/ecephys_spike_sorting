@@ -2,7 +2,6 @@ import os
 import sys
 import subprocess
 import json
-from dotenv import load_dotenv
 
 sys.path.append(os.path.dirname(__file__))
 from helpers import SpikeGLX_utils
