@@ -369,6 +369,6 @@ def createInputJson(
 
     with io.open(output_file, 'w', encoding='utf-8') as f:
         f.write(json.dumps(dictionary, ensure_ascii=False, sort_keys=True, indent=4))
-    os.chmod(output_file, '0o664')
+    os.chmod(output_file, 0o664)
 
     return dictionary
