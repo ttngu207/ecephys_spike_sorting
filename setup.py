@@ -35,5 +35,6 @@ setup(
         'xmljson',
         'xarray',
         'scikit-learn',
+        'python-dotenv'
     ],
 )
