@@ -31,10 +31,12 @@ setup(
         'pandas',
         'GitPython',
         'pillow',
-        'argschema',
+        'argschema==1.*',
+        'marshmallow==2.*',
         'xmljson',
         'xarray',
         'scikit-learn',
-        'python-dotenv'
+        'python-dotenv',
+        'h5py'
     ],
 )
