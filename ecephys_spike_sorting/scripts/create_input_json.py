@@ -1,4 +1,5 @@
 import os, io, json, sys
+import pathlib
 from dotenv import load_dotenv
 
 if sys.platform == 'linux':
@@ -37,6 +38,10 @@ def createInputJson(
                     kilosort_output_directory=None,
                     ks_make_copy=False,
                     probe_type='3A',
+                    sample_rate=30000,
+                    num_channels=385,
+                    reference_channels=[191],
+                    uVPerBit=2.34375,
                     catGT_run_name='test',
                     gate_string='0',
                     trigger_string='0,0',
@@ -117,15 +122,6 @@ def createInputJson(
          and npx_directory is None:
         raise Exception('Must specify at least one output directory')
 
-
-    #default ephys params. For spikeGLX, these get replaced by values read from metadata
-    sample_rate = 30000
-    num_channels = 385
-    reference_channels = [191]
-    uVPerBit = 2.34375
-    acq_system = 'PXI'
-
-
     if spikeGLX_data:
         # location of the raw data is the continuous file passed from script
         # metadata file should be located in same directory
@@ -141,14 +137,23 @@ def createInputJson(
             print('SpikeGLX params read from meta')
             print('probe type: {:s}, sample_rate: {:.5f}, num_channels: {:d}, uVPerBit: {:.4f}'.format\
                   (probe_type, sample_rate, num_channels, uVPerBit))
-        #print('kilosort output directory: ' + kilosort_output_directory )
 
-
+        lf_file = pathlib.Path(continuous_file).parent / pathlib.Path(continuous_file).name.replace('.ap.', '.lf.')
+        reorder_lfp_channels = True
     else:
-       print('currently only supporting spikeGLX data')
+        # Open Ephys system
 
+        if probe_type == '3A':
+            reference_channels = [36, 75, 112, 151, 188, 227, 264, 303, 340, 379]
+        else:
+            reference_channels = [191]
+        
+        continuous_dir = pathlib.Path(continuous_file).parent
+        lf_file = continuous_dir.parent / ('.'.join(continuous_dir.name.split('.')[:-1]) + f'.{int(continuous_dir.name.split(".")[-1]) + 1}') / 'continuous.dat'
 
+        reorder_lfp_channels = probe_type == '3A'
 
+    lf_file = lf_file.as_posix()
 
     # geometry params by probe type. expand the dictoionaries to add types
     # vertical probe pitch vs probe type
@@ -193,7 +198,7 @@ def createInputJson(
     {
 
         "directories": {
-            "ecephys_directory":ecephys_directory,
+            "ecephys_directory": ecephys_directory,
             "npx_directory": npx_directory,
             "extracted_data_directory": extracted_data_directory,
             "kilosort_output_directory": kilosort_output_directory,
@@ -222,8 +227,8 @@ def createInputJson(
             "reference_channels" : reference_channels,
             "vertical_site_spacing" : 10e-6,
             "ap_band_file" : continuous_file,
-            "lfp_band_file" : os.path.join(extracted_data_directory, 'continuous', 'Neuropix-' + acq_system + '-100.1', 'continuous.dat'),
-            "reorder_lfp_channels" : True,
+            "lfp_band_file" : lf_file,
+            "reorder_lfp_channels" : reorder_lfp_channels,
             "cluster_group_file_name" : 'cluster_group.tsv'
         },
 
