@@ -122,6 +122,8 @@ def createInputJson(
          and npx_directory is None:
         raise Exception('Must specify at least one output directory')
 
+    extracted_data_directory = extracted_data_directory or kilosort_output_directory
+
     if spikeGLX_data:
         # location of the raw data is the continuous file passed from script
         # metadata file should be located in same directory
@@ -140,9 +142,12 @@ def createInputJson(
 
         lf_file = pathlib.Path(continuous_file).parent / pathlib.Path(continuous_file).name.replace('.ap.', '.lf.')
         reorder_lfp_channels = True
+
+        settings_xml = npx_directory
+        probe_json = npx_directory
+        settings_json = npx_directory
     else:
         # Open Ephys system
-
         if probe_type == '3A':
             reference_channels = [36, 75, 112, 151, 188, 227, 264, 303, 340, 379]
         else:
@@ -152,6 +157,11 @@ def createInputJson(
         lf_file = continuous_dir.parent / ('.'.join(continuous_dir.name.split('.')[:-1]) + f'.{int(continuous_dir.name.split(".")[-1]) + 1}') / 'continuous.dat'
 
         reorder_lfp_channels = probe_type == '3A'
+
+        settings_xml = os.path.join(npx_directory, 'settings.xml')
+        probe_json = os.path.join(extracted_data_directory, 'probe_info.json')
+        settings_json = os.path.join(extracted_data_directory, 'open-ephys.json')
+
 
     lf_file = lf_file.as_posix()
 
@@ -206,8 +216,8 @@ def createInputJson(
        },
 
         "common_files": {
-            "settings_json" : npx_directory,
-            "probe_json" : npx_directory,
+            "settings_json" : settings_json,
+            "probe_json" : probe_json,
         },
 
         "waveform_metrics" : {
@@ -234,7 +244,7 @@ def createInputJson(
 
         "extract_from_npx_params" : {
             "npx_directory": npx_directory,
-            "settings_xml": npx_directory,
+            "settings_xml": settings_xml,
             "npx_extractor_executable": r"C:\Users\svc_neuropix\Documents\GitHub\npxextractor\Release\NpxExtractor.exe",
             "npx_extractor_repo": r"C:\Users\svc_neuropix\Documents\GitHub\npxextractor"
         },
@@ -267,8 +277,8 @@ def createInputJson(
             "matlab_home_directory": kilosort_output_tmp,
             "kilosort_repository" : kilosort_repository,
             "npy_matlab_repository" : npy_matlab_repository,
-            "kilosort_version" : 2,
-            "spikeGLX_data" : True,
+            "kilosort_version" : KS2ver,
+            "spikeGLX_data" : spikeGLX_data,
             "ks_make_copy": ks_make_copy,
             "surface_channel_buffer" : 15,
 
