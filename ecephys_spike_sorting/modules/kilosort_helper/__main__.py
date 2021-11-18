@@ -38,35 +38,35 @@ def run_kilosort(args):
                               args['ephys_params']['sample_rate'],
                               args['ephys_params']['bit_volts'])
      
-    
-    if args['kilosort_helper_params']['spikeGLX_data']:
-       # SpikeGLX data, will build KS chanMap based on the metadata file plus 
-       # exclusion of noise channels found in get_noise_channels
-       # metadata file must be in the same directory as the ap_band_file
-       # resulting chanmap is copied to the matlab home directory, and will 
-       # overwrite any existing 'chanMap.mat'
-       metaName, binExt = os.path.splitext(args['ephys_params']['ap_band_file'])
-       metaFullPath = Path(metaName + '.meta')
+    if not args['kilosort_helper_params'].get('chanMap_pregenerated', False):
+        # generate and write chanMap.mat file - different implementation for SpikeGLX and Open Ephys
+        if args['kilosort_helper_params']['spikeGLX_data']:
+            # SpikeGLX data, will build KS chanMap based on the metadata file plus 
+            # exclusion of noise channels found in get_noise_channels
+            # metadata file must be in the same directory as the ap_band_file
+            # resulting chanmap is copied to the matlab home directory, and will 
+            # overwrite any existing 'chanMap.mat'
+            metaName, binExt = os.path.splitext(args['ephys_params']['ap_band_file'])
+            metaFullPath = Path(metaName + '.meta')
 
-       destFullPath = os.path.join(args['kilosort_helper_params']['matlab_home_directory'], 'chanMap.mat')
-       MaskChannels = np.where(mask == False)[0]      
-       MetaToCoords( metaFullPath=metaFullPath, outType=1, badChan=MaskChannels, destFullPath=destFullPath)
-       # end of SpikeGLX block
-       
-    else:
-        # Open Ephys data, specifically finding the tissue surface and creating a chanMap to 
-        # exclude those channels. Assumes 3A/NP1.0 site geometry, all sites in bank 0.
-        _, offset, scaling, surface_channel, air_channel = read_probe_json(args['common_files']['probe_json'])
+            destFullPath = os.path.join(args['kilosort_helper_params']['matlab_home_directory'], 'chanMap.mat')
+            MaskChannels = np.where(mask == False)[0]      
+            MetaToCoords( metaFullPath=metaFullPath, outType=1, badChan=MaskChannels, destFullPath=destFullPath)
+            # end of SpikeGLX block
+        else:
+            # Open Ephys data, specifically finding the tissue surface and creating a chanMap to 
+            # exclude those channels. Assumes 3A/NP1.0 site geometry, all sites in bank 0.
+            _, offset, scaling, surface_channel, air_channel = read_probe_json(args['common_files']['probe_json'])
+            
+            mask[args['ephys_params']['reference_channels']] = False
         
-        mask[args['ephys_params']['reference_channels']] = False
-    
-        top_channel = np.min([args['ephys_params']['num_channels'], int(surface_channel) + args['kilosort_helper_params']['surface_channel_buffer']])
-        
-        matlab_file_generator.create_chanmap(args['kilosort_helper_params']['matlab_home_directory'], \
-                                            EndChan = top_channel, \
-                                            probe_type = args['ephys_params']['probe_type'],
-                                            MaskChannels = np.where(mask == False)[0])
-        # end of Open Ephys block    
+            top_channel = np.min([args['ephys_params']['num_channels'], int(surface_channel) + args['kilosort_helper_params']['surface_channel_buffer']])
+            
+            matlab_file_generator.create_chanmap(args['kilosort_helper_params']['matlab_home_directory'], \
+                                                EndChan = top_channel, \
+                                                probe_type = args['ephys_params']['probe_type'],
+                                                MaskChannels = np.where(mask == False)[0])
+            # end of Open Ephys block    
     
 
 # copy the msster fle to the same directory that contains the channel map and config file

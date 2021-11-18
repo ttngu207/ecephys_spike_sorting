@@ -61,6 +61,7 @@ def createInputJson(
                     tPrime_3A = False,
                     toStream_path_3A = None,
                     fromStream_list_3A = None,
+                    chanMap_path=None,
                     ks_remDup = 0,
                     ks_finalSplits = 1,
                     ks_labelGood = 1,
@@ -113,6 +114,14 @@ def createInputJson(
     cWaves_path = cWaves_path or os.getenv('cWaves_path')
     kilosort_output_tmp = kilosort_output_tmp or os.getenv('kilosort_output_tmp')
 
+    # filepath to chanMap.mat
+    if chanMap_path is None:
+        chanMap_path = "'chanMap.mat'"
+        chanMap_pregenerated = False
+    else:
+        chanMap_path = f'"{chanMap_path}"'
+        chanMap_pregenerated = True
+    
     # derived directory names
 
     modules_directory = os.path.join(ecephys_directory,'modules')
@@ -281,6 +290,7 @@ def createInputJson(
             "spikeGLX_data" : spikeGLX_data,
             "ks_make_copy": ks_make_copy,
             "surface_channel_buffer" : 15,
+            "chanMap_pregenerated": chanMap_pregenerated,
 
             "kilosort2_params" :
             {
@@ -291,7 +301,7 @@ def createInputJson(
                 "saveRez" : ks_saveRez,
                 "copy_fproc" : ks_copy_fproc,
                 "fproc" : fproc_str,
-                "chanMap" : "'chanMap.mat'",
+                "chanMap" : chanMap_path,
                 "fshigh" : 150,
                 "minfr_goodchannels" : ks_minfr_goodchannels,
                 "Th" : ks_Th,
