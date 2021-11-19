@@ -1,3 +1,5 @@
+import matlab.engine  # on some systems, the matlab engine must be loaded first
+
 from argschema import ArgSchemaParser
 import os
 import time
@@ -16,8 +18,6 @@ from .SGLXMetaToCoords import MetaToCoords
 from ...common.utils import read_probe_json, get_repo_commit_date_and_hash, rms, getSortResults
 
 def run_kilosort(args):
-    import matlab.engine  # on some systems, the matlab engine must be loaded first
-
     print('ecephys spike sorting: kilosort helper module')
 
     print('master branch -- single main KS2/KS25/KS3')
