@@ -286,7 +286,7 @@ def createInputJson(
             "matlab_home_directory": kilosort_output_tmp,
             "kilosort_repository" : kilosort_repository,
             "npy_matlab_repository" : npy_matlab_repository,
-            "kilosort_version" : KS2ver,
+            "kilosort_version" : int(float(KS2ver)),
             "spikeGLX_data" : spikeGLX_data,
             "ks_make_copy": ks_make_copy,
             "surface_channel_buffer" : 15,
