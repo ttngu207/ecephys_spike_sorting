@@ -74,7 +74,7 @@ def run_kilosort(args):
                                                 MaskChannels = np.where(mask == False)[0])
             # end of Open Ephys block
     else:
-        destFullPath = args['kilosort_helper_params']['kilosort2_params']['chanMap']
+        destFullPath = args['kilosort_helper_params']['kilosort2_params']['chanMap'].strip('\'')
 
 # copy the msster fle to the same directory that contains the channel map and config file
 #    master_fullpath = os.path.join(os.path.join(args['kilosort_helper_params']['master_file_path'],args['kilosort_helper_params']['master_file_name']))
