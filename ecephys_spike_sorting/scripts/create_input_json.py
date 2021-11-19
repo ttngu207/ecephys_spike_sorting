@@ -73,6 +73,7 @@ def createInputJson(
                     ks_CSBseed = 1,
                     ks_LTseed = 1,
                     ks_templateRadius_um = 163,
+                    use_C_Waves=True,
                     c_Waves_snr_um = 160,
                     qm_isi_thresh = 1.5/1000
                     ):
@@ -121,7 +122,7 @@ def createInputJson(
     else:
         chanMap_path = f"'{chanMap_path}'"
         chanMap_pregenerated = True
-    
+
     # derived directory names
 
     modules_directory = os.path.join(ecephys_directory,'modules')
@@ -161,7 +162,7 @@ def createInputJson(
             reference_channels = [36, 75, 112, 151, 188, 227, 264, 303, 340, 379]
         else:
             reference_channels = [191]
-        
+
         continuous_dir = pathlib.Path(continuous_file).parent
         lf_file = continuous_dir.parent / ('.'.join(continuous_dir.name.split('.')[:-1]) + f'.{int(continuous_dir.name.split(".")[-1]) + 1}') / 'continuous.dat'
 
@@ -338,7 +339,7 @@ def createInputJson(
             "spread_threshold" : 0.12,
             "site_range" : 16,
             "cWaves_path" : cWaves_path,
-            "use_C_Waves" : True,
+            "use_C_Waves" : use_C_Waves,
             "snr_radius" : c_waves_radius_sites
         },
 
