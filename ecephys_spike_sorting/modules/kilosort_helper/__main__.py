@@ -38,10 +38,7 @@ def run_kilosort(args):
                               args['ephys_params']['bit_volts'])
 
     # chanMap.mat section
-    if args['kilosort_helper_params']['spikeGLX_data']:
-        metaName = Path(args['ephys_params']['ap_band_file']).stem
-    else:
-        metaName = Path(args['ephys_params']['ap_band_file']).parent.name
+    metaName = Path(args['ephys_params']['ap_band_file']).stem
 
     if not args['kilosort_helper_params'].get('chanMap_pregenerated', False):
         # generate and write chanMap.mat file - different implementation for SpikeGLX and Open Ephys
