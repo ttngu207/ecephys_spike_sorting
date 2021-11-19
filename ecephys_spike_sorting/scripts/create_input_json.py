@@ -119,7 +119,7 @@ def createInputJson(
         chanMap_path = "'chanMap.mat'"
         chanMap_pregenerated = False
     else:
-        chanMap_path = f'"{chanMap_path}"'
+        chanMap_path = f"'{chanMap_path}'"
         chanMap_pregenerated = True
     
     # derived directory names
