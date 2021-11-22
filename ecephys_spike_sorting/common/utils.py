@@ -313,7 +313,7 @@ def load_kilosort_data(folder,
     channel_pos = load(folder, 'channel_positions.npy')
 
     # handles channel_map being read as 2-dimensional
-    channel_map = np.squeeze(channel_map).astype(float)
+    channel_map = np.squeeze(channel_map).astype(int)
 
     if include_pcs:
         pc_features = load(folder, 'pc_features.npy')
