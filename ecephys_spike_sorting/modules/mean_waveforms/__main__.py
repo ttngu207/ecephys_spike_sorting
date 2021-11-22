@@ -23,19 +23,20 @@ def calculate_mean_waveforms(args):
 
     start = time.time()
 
+    # regenerate the clus_Table in case there has been manual curation of the data in phy
+    output_dir = args['directories']['kilosort_output_directory']
+
+    # get version number for new clus_table file
+    clu_path_orig = os.path.join(output_dir, 'clus_Table.npy')
+    clus_table_npy, clu_version = getFileVersion(clu_path_orig)
+
+    # version = 0 if no clu_Table exists, file = clus_Table.npy
+    # version = 1 or higher, new clus_Table = clus_Table_version.npy
+
     if args['mean_waveform_params']['use_C_Waves']:
 
         print('Calculating mean waveforms using C_waves.')
         spikeglx_bin = args['ephys_params']['ap_band_file']
-        # regenerate the clus_Table in case there has been manual curation of the data in phy
-        output_dir = args['directories']['kilosort_output_directory']
-
-        # get version number for new clus_table file
-        clu_path_orig = os.path.join(output_dir, 'clus_Table.npy' )
-        clus_table_npy, clu_version = getFileVersion(clu_path_orig)
-
-        #version = 0 if no clu_Table exists, file = clus_Table.npy
-        #version = 1 or higher, new clus_Table = clus_Table_version.npy
 
         getSortResults(output_dir, clu_version)
 
@@ -59,10 +60,6 @@ def calculate_mean_waveforms(args):
             if os.path.exists(old_snr):
                 new_snr = os.path.join(dest,'cluster_snr_0.npy')
                 os.rename(old_snr, new_snr)
-
-
-
-
 
         # path to the 'runit.bat' executable that calls C_Waves.
         # Essential in linux where C_Waves executable is only callable through runit
@@ -140,9 +137,6 @@ def calculate_mean_waveforms(args):
         site_x = np.squeeze(loadmat(chanMapMat)['xcoords'])
         site_y = np.squeeze(loadmat(chanMapMat)['ycoords'])
 
-
-
-
         metrics = metrics_from_file(mean_waveform_fullpath, snr_fullpath, clus_table_npy, \
                     spike_times, \
                     spike_clusters, \
@@ -154,15 +148,6 @@ def calculate_mean_waveforms(args):
                     w_inv, \
                     site_x, site_y, \
                     args['mean_waveform_params'])
-
-        wm_fullpath = (args['waveform_metrics']['waveform_metrics_file'])
-
-        if clu_version > 0:
-           # save new metrics as _version number
-           wm_fullpath = os.path.join(pathlib.Path(wm_fullpath).parent, pathlib.Path(wm_fullpath).stem + '_' + repr(clu_version) + '.csv')
-
-        metrics.to_csv(wm_fullpath)
-
 
     else:
 
@@ -194,8 +179,17 @@ def calculate_mean_waveforms(args):
                     args['mean_waveform_params'])
 
         writeDataAsNpy(waveforms, args['mean_waveform_params']['mean_waveforms_file'])
-        metrics.to_csv(args['waveform_metrics']['waveform_metrics_file'])
 
+    # save waveform metrics to csv file
+    wm_fullpath = (args['waveform_metrics']['waveform_metrics_file'])
+
+    if clu_version > 0:
+        # save new metrics as _version number
+        wm_fullpath = os.path.join(pathlib.Path(wm_fullpath).parent,
+                                   pathlib.Path(wm_fullpath).stem + '_' + repr(
+                                       clu_version) + '.csv')
+
+    metrics.to_csv(wm_fullpath)
 
     # if the cluster metrics have already been run, merge the waveform metrics into that file
     # build file path with current version
