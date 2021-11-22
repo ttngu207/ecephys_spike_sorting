@@ -85,7 +85,6 @@ def extract_waveforms(raw_data,
         (total_units, total_epochs, 2, raw_data.shape[1], samples_per_spike))
     spike_count = np.zeros((total_units, total_epochs + 1), dtype = 'int')
 
-    channel_map = np.squeeze(channel_map)
     peak_channels = np.squeeze(channel_map[np.argmax(np.max(templates,1) - np.min(templates,1),1)])
 
     for epoch_idx, epoch in enumerate(epochs):
