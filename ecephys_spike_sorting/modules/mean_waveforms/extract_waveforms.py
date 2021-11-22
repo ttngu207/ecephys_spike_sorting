@@ -19,6 +19,8 @@ def extract_waveforms(raw_data,
                       bit_volts,
                       sample_rate,
                       site_spacing,
+                      site_x,
+                      site_y,
                       params,
                       epochs=None):
 
@@ -133,7 +135,9 @@ def extract_waveforms(raw_data,
                                                                          spread_threshold,
                                                                          site_range,
                                                                          site_spacing,
-                                                                         epoch.name
+                                                                         epoch.name,
+                                                                         site_x,
+                                                                         site_y
                                                                          )])
 
                 with warnings.catch_warnings():

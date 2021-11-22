@@ -5,21 +5,22 @@ import pandas as pd
 from scipy.stats import linregress
 from scipy.signal import resample
 
-def calculate_waveform_metrics(waveforms, 
-                               cluster_id, 
-                               peak_channel, 
-                               channel_map, 
-                               sample_rate, 
-                               upsampling_factor, 
+def calculate_waveform_metrics(waveforms,
+                               cluster_id,
+                               peak_channel,
+                               channel_map,
+                               sample_rate,
+                               upsampling_factor,
                                spread_threshold,
                                site_range,
                                site_spacing,
-                               epoch_name):
-    
+                               epoch_name,
+                               site_x, site_y):
+
     """
     Calculate metrics for an array of waveforms.
 
-    Metrics come from Jia et al. (2019) High-density extracellular probes reveal 
+    Metrics come from Jia et al. (2019) High-density extracellular probes reveal
     dendritic backpropagation and facilitate neuron classification. J Neurophys
 
     https://doi.org/10.1152/jn.00680.2018
@@ -75,7 +76,7 @@ def calculate_waveform_metrics(waveforms,
         mean_1D_waveform, timestamps)
 
     amplitude, spread, velocity_above, velocity_below = calculate_2D_features(
-        mean_2D_waveform, timestamps, local_peak, spread_threshold, site_range, site_spacing)
+        mean_2D_waveform, timestamps, local_peak, site_x, site_y, spread_threshold, site_range)
 
     data = [[cluster_id, epoch_name, peak_channel, snr, duration, halfwidth, PT_ratio, repolarization_slope,
               recovery_slope, amplitude, spread, velocity_above, velocity_below]]
@@ -89,11 +90,11 @@ def calculate_waveform_metrics(waveforms,
 
 def calculate_waveform_metrics_from_avg(avg_waveform,
                                         snr,
-                                        cluster_id, 
-                                        peak_channel, 
-                                        channel_map, 
-                                        sample_rate, 
-                                        upsampling_factor, 
+                                        cluster_id,
+                                        peak_channel,
+                                        channel_map,
+                                        sample_rate,
+                                        upsampling_factor,
                                         spread_threshold,
                                         site_range,
                                         site_x, site_y):
@@ -101,7 +102,7 @@ def calculate_waveform_metrics_from_avg(avg_waveform,
     """
     Calculate metrics for an array of waveforms for a single cluster.
 
-    Metrics come from Jia et al. (2019) High-density extracellular probes reveal 
+    Metrics come from Jia et al. (2019) High-density extracellular probes reveal
     dendritic backpropagation and facilitate neuron classification. J Neurophys
 
     https://doi.org/10.1152/jn.00680.2018
@@ -136,10 +137,10 @@ def calculate_waveform_metrics_from_avg(avg_waveform,
     """
 
     # snr = calculate_snr(waveforms[:, peak_channel, :])
-    
+
     # calulating from average waveforms drawn from whole session
     epoch_name = 'complete_session'
-    
+
     # all metric calculations are restricted to the channesl in the map
     # jic removed this -- we need to sample all channels for 2D calculations
     # moreover, this is assumed in the stnadard Allen calculation
@@ -185,7 +186,7 @@ def calculate_waveform_metrics_from_avg(avg_waveform,
 
 
 def calculate_snr(W):
-    
+
     """
     Calculate SNR of spike waveforms.
 
@@ -211,8 +212,8 @@ def calculate_snr(W):
 
 
 def calculate_waveform_duration(waveform, timestamps):
-    
-    """ 
+
+    """
     Duration (in seconds) between peak and trough
 
     Inputs:
@@ -231,16 +232,16 @@ def calculate_waveform_duration(waveform, timestamps):
 
     # to avoid detecting peak before trough
     if waveform[peak_idx] > np.abs(waveform[trough_idx]):
-        duration =  timestamps[peak_idx:][np.where(waveform[peak_idx:]==np.min(waveform[peak_idx:]))[0][0]] - timestamps[peak_idx] 
+        duration =  timestamps[peak_idx:][np.where(waveform[peak_idx:]==np.min(waveform[peak_idx:]))[0][0]] - timestamps[peak_idx]
     else:
-        duration =  timestamps[trough_idx:][np.where(waveform[trough_idx:]==np.max(waveform[trough_idx:]))[0][0]] - timestamps[trough_idx] 
+        duration =  timestamps[trough_idx:][np.where(waveform[trough_idx:]==np.max(waveform[trough_idx:]))[0][0]] - timestamps[trough_idx]
 
     return duration * 1e3
 
 
 def calculate_waveform_halfwidth(waveform, timestamps):
-    
-    """ 
+
+    """
     Spike width (in seconds) at half max amplitude
 
     Inputs:
@@ -271,7 +272,7 @@ def calculate_waveform_halfwidth(waveform, timestamps):
             thresh_crossing_2 = np.min(
                 np.where(waveform[trough_idx:] > threshold)[0]) + trough_idx
 
-        halfwidth = (timestamps[thresh_crossing_2] - timestamps[thresh_crossing_1]) 
+        halfwidth = (timestamps[thresh_crossing_2] - timestamps[thresh_crossing_1])
 
     except ValueError:
 
@@ -282,7 +283,7 @@ def calculate_waveform_halfwidth(waveform, timestamps):
 
 def calculate_waveform_PT_ratio(waveform):
 
-    """ 
+    """
     Peak-to-trough ratio of 1D waveform
 
     Inputs:
@@ -305,8 +306,8 @@ def calculate_waveform_PT_ratio(waveform):
 
 
 def calculate_waveform_repolarization_slope(waveform, timestamps, window=20):
-    
-    """ 
+
+    """
     Spike repolarization slope (after maximum deflection point)
 
     Inputs:
@@ -334,7 +335,7 @@ def calculate_waveform_repolarization_slope(waveform, timestamps, window=20):
 
 def calculate_waveform_recovery_slope(waveform, timestamps, window=20):
 
-    """ 
+    """
     Spike recovery slope (after repolarization)
 
     Inputs:
@@ -369,8 +370,8 @@ def calculate_waveform_recovery_slope(waveform, timestamps, window=20):
 
 
 def calculate_2D_features(waveform, timestamps, peak_channel, site_x, site_y, spread_threshold = 0.12, site_range=16):
-    
-    """ 
+
+    """
     Compute features of 2D waveform (channels x samples)
 
     Inputs:
@@ -392,12 +393,12 @@ def calculate_2D_features(waveform, timestamps, peak_channel, site_x, site_y, sp
     """
 
     assert site_range % 2 == 0 # must be even
-    
+
     # sample sites that are in the same "column" as the peak channel
     # first find nn with y ~= y_peak
-    # x = x_peak or x_nn. For NP 1.0, this will select either the 
+    # x = x_peak or x_nn. For NP 1.0, this will select either the
     # two left or two right hand columns.
-    
+
     dist = np.sqrt(( pow((site_x - site_x[peak_channel]),2) + pow((site_y - site_y[peak_channel]),2)))
     ydiff = ( site_y != site_y[peak_channel])
     n_channel = site_x.size
@@ -405,7 +406,7 @@ def calculate_2D_features(waveform, timestamps, peak_channel, site_x, site_y, sp
     x_nn = -1
     amp_nn = 0
     x_peak = site_x[peak_channel]
-    
+
     for i in range(n_channel):
         if ydiff[i] and dist[i] <= min_dist:  #only consider nn at diff y
             min_dist = dist[i]
@@ -414,12 +415,12 @@ def calculate_2D_features(waveform, timestamps, peak_channel, site_x, site_y, sp
             currAmp = np.max(waveform[i,:]) - np.min(waveform[i,:])
             if currAmp > amp_nn:
                 x_nn = site_x[i]
-            
+
     # select among sites with x = x_peak and x_nn for sites to sample
-    inCol = (site_x == x_peak) | (site_x == x_nn)   
+    inCol = (site_x == x_peak) | (site_x == x_nn)
     sort_dist_ind = np.argsort(dist)
     sites_to_sample = np.zeros(site_range+1, dtype='int32')
-    
+
     nfound = 0
     i = 0
     # walk over all sites in order of distance from the peak_channel, add to
@@ -428,13 +429,13 @@ def calculate_2D_features(waveform, timestamps, peak_channel, site_x, site_y, sp
         curr_chan = sort_dist_ind[i]
         if inCol[curr_chan]:
             sites_to_sample[nfound] = curr_chan
-            nfound = nfound + 1           
+            nfound = nfound + 1
             # print('site, dist: ' + repr(curr_chan) + ',' + repr(dist[curr_chan]))
         i = i+1
-            
-    
-    # original implentation for NP 1.0, assuming all sites in one bank, pick 
-    # even or odd sites 
+
+
+    # original implentation for NP 1.0, assuming all sites in one bank, pick
+    # even or odd sites
     # sites_to_sample = np.arange(-site_range, site_range+1, 2) + peak_channel
     # sites_to_sample = sites_to_sample[(sites_to_sample > 0) * (sites_to_sample < waveform.shape[0])]
 
@@ -459,13 +460,13 @@ def calculate_2D_features(waveform, timestamps, peak_channel, site_x, site_y, sp
     max_chan = np.argmax(overall_amplitude)
 
     points_above_thresh = np.where(overall_amplitude > (amplitude * spread_threshold))[0]
-    
+
     if len(points_above_thresh) > 1:
         points_above_thresh = points_above_thresh[isnot_outlier(points_above_thresh)]
-        
+
     yDist = site_y[sites_to_sample] - site_y[peak_channel]
     yDist = yDist[points_above_thresh]
-    
+
     numpts = yDist.size
     # debug print to understand what sites are selected
 #    for i in range(numpts):
@@ -473,7 +474,7 @@ def calculate_2D_features(waveform, timestamps, peak_channel, site_x, site_y, sp
     spread = np.max(yDist) - np.min(yDist)
 
     # original channel based calculation of spread
-    
+
     # spread = len(points_above_thresh) * site_spacing * 1e6
     # channels = sites_to_sample - peak_channel
     # channels = channels[points_above_thresh]
@@ -482,7 +483,7 @@ def calculate_2D_features(waveform, timestamps, peak_channel, site_x, site_y, sp
     trough_times = trough_times[points_above_thresh]
 
     velocity_above, velocity_below = get_velocity(yDist, trough_times)
- 
+
     return amplitude, spread, velocity_above, velocity_below
 
 
@@ -494,7 +495,7 @@ def calculate_2D_features(waveform, timestamps, peak_channel, site_x, site_y, sp
 
 
 def get_velocity(yDist, times):
-    
+
     """
     Calculate slope of trough time above and below soma.
 
@@ -513,7 +514,7 @@ def get_velocity(yDist, times):
         Inverse of velocity of spike propagation below the soma (s / m)
 
     """
-    
+
     above_soma = yDist >= 0
     below_soma = yDist <= 0
 
@@ -535,7 +536,7 @@ def get_velocity(yDist, times):
 def isnot_outlier(points, thresh=1.5):
 
     """
-    Returns a boolean array with True if points are outliers and False 
+    Returns a boolean array with True if points are outliers and False
     otherwise.
 
     Parameters:
@@ -553,17 +554,17 @@ def isnot_outlier(points, thresh=1.5):
     ----------
         Boris Iglewicz and David Hoaglin (1993), "Volume 16: How to Detect and
         Handle Outliers", The ASQC Basic References in Quality Control:
-        Statistical Techniques, Edward F. Mykytka, Ph.D., Editor. 
+        Statistical Techniques, Edward F. Mykytka, Ph.D., Editor.
     """
 
     if len(points.shape) == 1:
         points = points[:,None]
 
     median = np.median(points, axis=0)
-    
+
     diff = np.sum((points - median)**2, axis=-1)
     diff = np.sqrt(diff)
-    
+
     med_abs_deviation = np.median(diff)
 
     modified_z_score = 0.6745 * diff / med_abs_deviation
