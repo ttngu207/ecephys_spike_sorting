@@ -11,17 +11,17 @@ from .waveform_metrics import calculate_waveform_metrics
 from ...common.epoch import Epoch
 from ...common.utils import printProgressBar
 
-def extract_waveforms(raw_data, 
-                      spike_times, 
-                      spike_clusters, 
-                      templates, 
-                      channel_map, 
-                      bit_volts, 
-                      sample_rate, 
-                      site_spacing, 
-                      params, 
+def extract_waveforms(raw_data,
+                      spike_times,
+                      spike_clusters,
+                      templates,
+                      channel_map,
+                      bit_volts,
+                      sample_rate,
+                      site_spacing,
+                      params,
                       epochs=None):
-    
+
     """
     Calculate mean waveforms for sorted units.
 
@@ -85,6 +85,7 @@ def extract_waveforms(raw_data,
         (total_units, total_epochs, 2, raw_data.shape[1], samples_per_spike))
     spike_count = np.zeros((total_units, total_epochs + 1), dtype = 'int')
 
+    channel_map = np.squeeze(channel_map)
     peak_channels = np.squeeze(channel_map[np.argmax(np.max(templates,1) - np.min(templates,1),1)])
 
     for epoch_idx, epoch in enumerate(epochs):
@@ -125,10 +126,10 @@ def extract_waveforms(raw_data,
 
                 # concatenate to existing dataframe
                 metrics = pd.concat([metrics, calculate_waveform_metrics(waveforms[:total_waveforms, :, :],
-                                                                         cluster_id, 
-                                                                         peak_channels[cluster_idx], 
+                                                                         cluster_id,
+                                                                         peak_channels[cluster_idx],
                                                                          channel_map,
-                                                                         sample_rate, 
+                                                                         sample_rate,
                                                                          upsampling_factor,
                                                                          spread_threshold,
                                                                          site_range,
