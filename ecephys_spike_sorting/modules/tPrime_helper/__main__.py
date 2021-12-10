@@ -12,7 +12,6 @@ from ...common.utils import catGT_ex_params_from_str
 
 
 def call_TPrime(args):
-
     # Run TPrime on a "standard" multiprobe + NI, using NP 1.0 or 2.0, with run
     # folder and probe folders
     # inputs:
@@ -114,7 +113,7 @@ def call_TPrime(args):
         toStream_path = os.path.join(run_directory, prb_dir, c_name)
         
         # convert events in the toStream to sec; they will not be adjusted
-        ks_outdir = 'imec' + str(toStream_prb) + '_ks2'
+        ks_outdir = 'imec' + str(toStream_prb) + '_ks' + args['kilosort_helper_params']['kilosort2_params']['KSver']
         st_file = os.path.join(run_directory, prb_dir, ks_outdir, 'spike_times.npy')
         # convert to seconds; if bNPY = True, returned file is an npy file
         # otherwise, text.
@@ -151,7 +150,7 @@ def call_TPrime(args):
             from_list.append(os.path.join(run_directory, prb_dir, c_name))
             c_index = len(from_stream_index)
             # build path to spike times npy file
-            ks_outdir = 'imec' + str(c_prb) + '_ks2'
+            ks_outdir = 'imec' + str(c_prb) + '_ks' + args['kilosort_helper_params']['kilosort2_params']['KSver']
             st_file = os.path.join(run_directory, prb_dir, ks_outdir, 'spike_times.npy')
             st_file_sec = spike_times_npy_to_sec(st_file, 0, bNPY)
             events_list.append(st_file_sec)
@@ -236,7 +235,7 @@ def call_TPrime(args):
             from_list.append(os.path.join(run_directory, prb_dir, c_name))
             c_index = len(from_stream_index)
             # build path to spike times npy file
-            ks_outdir = 'imec' + str(c_prb) + '_ks2'
+            ks_outdir = 'imec' + str(c_prb) + '_ks' + args['kilosort_helper_params']['kilosort2_params']['KSver'] 
             st_file = os.path.join(run_directory, prb_dir, ks_outdir, 'spike_times.npy')
             st_file_sec = spike_times_npy_to_sec(st_file, 0, bNPY)
             events_list.append(st_file_sec)
@@ -262,25 +261,27 @@ def call_TPrime(args):
     # Essential in linux where TPrime executable is only callable through runit
     if sys.platform.startswith('win'):
         exe_path = os.path.join(args['tPrime_helper_params']['tPrime_path'], 'runit.bat')
-    elif sys.platform.starstwith('linux'):
+    elif sys.platform.startswith('linux'):
         exe_path = os.path.join(args['tPrime_helper_params']['tPrime_path'], 'runit.sh')
     else:
         print('unknown system, cannot run TPrime')   
         
     # Print out command for help with debugging
-    tcmd = exe_path + ' -syncperiod=' + repr(sync_period) + \
-        ' -tostream=' + toStream_path
+    tcmd = list()
+    tcmd.append(exe_path)
+    tcmd.append(' -syncperiod=' + repr(sync_period))
+    tcmd.append(' -tostream=' + toStream_path)
 
     for i, fp in enumerate(from_list):
-        tcmd = tcmd + ' -fromstream=' + repr(i) + ',' + fp
+        tcmd.append(' -fromstream=' + repr(i) + ',' + fp)
 
     for i, ep in enumerate(events_list):
-        tcmd = tcmd + ' -events=' + repr(from_stream_index[i]) + ',' + ep + ',' + out_list[i]
+        tcmd.append(' -events=' + repr(from_stream_index[i]) + ',' + ep + ',' + out_list[i])
 
     # write out file to record the TPrime command for a record
     bat_path = os.path.join(run_directory, run_name + '_TPrime_cmd.txt')
     with open(bat_path, 'w') as batfile:
-        batfile.write(tcmd)
+        batfile.write(str(tcmd))
 
         
     # make the TPrime call
@@ -347,7 +348,7 @@ def call_TPrime_3A(args):
     # convert events in the toStream to sec; they will not be adjusted
     # search the directory the edges file to get the ks2 output
     # get name of ks2 output dir and convert to sec
-    ks_outdir = fnmatch.filter(file_list, 'imec_*_ks2')[0]
+    ks_outdir = fnmatch.filter(file_list, 'imec_*_ks' + args['kilosort_helper_params']['kilosort2_params']['KSver'])[0]
     st_file = os.path.join(toStream_parent, ks_outdir, 'spike_times.npy')
     toStream_events_sec = spike_times_npy_to_sec(st_file, 0, bNPY)
     # for later data analysis with spike times as sec, also save as npy
@@ -367,7 +368,7 @@ def call_TPrime_3A(args):
             return              
         fS_name = flt_list[0]
         fS_file_list.append(os.path.join(fS_parent,fS_name))
-        ks_outdir = fnmatch.filter(file_list, 'imec_*_ks2')[0]
+        ks_outdir = fnmatch.filter(file_list, 'imec_*_ks' + args['kilosort_helper_params']['kilosort2_params']['KSver'])[0]
         st_file = os.path.join(fS_parent, ks_outdir, 'spike_times.npy')
         st_file_sec = spike_times_npy_to_sec(st_file, 0, bNPY)
         events_list.append(st_file_sec)
