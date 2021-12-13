@@ -67,6 +67,8 @@ class KilosortHelperParameters(DefaultSchema):
     kilosort_params = Nested(KilosortParameters, required=False, help='Parameters used to auto-generate a Kilosort config file')
     kilosort2_params = Nested(Kilosort2Parameters, required=False, help='Parameters used to auto-generate a Kilosort2 config file')
 
+    chanMap_pregenerated = Bool(required=False, default=False, help='If true, use pre-generated chanMap.mat file (with path specified in Kilosort2Parameters) instead of creating a new one')
+
 class InputParameters(ArgSchema):
     
     kilosort_helper_params = Nested(KilosortHelperParameters)

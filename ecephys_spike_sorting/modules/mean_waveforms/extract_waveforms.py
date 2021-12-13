@@ -11,17 +11,19 @@ from .waveform_metrics import calculate_waveform_metrics
 from ...common.epoch import Epoch
 from ...common.utils import printProgressBar
 
-def extract_waveforms(raw_data, 
-                      spike_times, 
-                      spike_clusters, 
-                      templates, 
-                      channel_map, 
-                      bit_volts, 
-                      sample_rate, 
-                      site_spacing, 
-                      params, 
+def extract_waveforms(raw_data,
+                      spike_times,
+                      spike_clusters,
+                      templates,
+                      channel_map,
+                      bit_volts,
+                      sample_rate,
+                      site_spacing,
+                      site_x,
+                      site_y,
+                      params,
                       epochs=None):
-    
+
     """
     Calculate mean waveforms for sorted units.
 
@@ -125,15 +127,17 @@ def extract_waveforms(raw_data,
 
                 # concatenate to existing dataframe
                 metrics = pd.concat([metrics, calculate_waveform_metrics(waveforms[:total_waveforms, :, :],
-                                                                         cluster_id, 
-                                                                         peak_channels[cluster_idx], 
+                                                                         cluster_id,
+                                                                         peak_channels[cluster_idx],
                                                                          channel_map,
-                                                                         sample_rate, 
+                                                                         sample_rate,
                                                                          upsampling_factor,
                                                                          spread_threshold,
                                                                          site_range,
                                                                          site_spacing,
-                                                                         epoch.name
+                                                                         epoch.name,
+                                                                         site_x,
+                                                                         site_y
                                                                          )])
 
                 with warnings.catch_warnings():
