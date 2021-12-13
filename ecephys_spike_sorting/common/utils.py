@@ -11,7 +11,7 @@ from git import Repo
 
 
 def find_range(x,a,b,option='within'):
-    
+
     """
     Find indices of data within or outside range [a,b]
 
@@ -53,7 +53,7 @@ def rms(data):
     Output:
     ------
     rms_value - float
-    
+
     """
 
     return np.power(np.mean(np.power(data.astype('float32'),2)),0.5)
@@ -91,21 +91,21 @@ def write_probe_json(output_file, channels, offset, scaling, mask, surface_chann
     """
 
     with open(output_file, 'w') as outfile:
-        json.dump( 
-                  {  
-                        'channel' : channels.tolist(), 
-                        'offset' : offset.tolist(), 
-                        'scaling' : scaling.tolist(), 
-                        'mask' : mask.tolist(), 
-                        'surface_channel' : surface_channel, 
+        json.dump(
+                  {
+                        'channel' : channels.tolist(),
+                        'offset' : offset.tolist(),
+                        'scaling' : scaling.tolist(),
+                        'mask' : mask.tolist(),
+                        'surface_channel' : surface_channel,
                         'air_channel' : air_channel,
                         'vertical_pos' : vertical_pos.tolist(),
                         'horizontal_pos' : horizontal_pos.tolist()
                    },
-                 
-                  outfile, 
-                  indent = 4, separators = (',', ': ') 
-                 ) 
+
+                  outfile,
+                  indent = 4, separators = (',', ': ')
+                 )
 
 def read_probe_json(input_file):
 
@@ -131,10 +131,10 @@ def read_probe_json(input_file):
         Index of channel at interface between saline/agar and air
 
     """
-    
+
     with open(input_file) as data_file:
         data = json.load(data_file)
-    
+
     scaling = np.array(data['scaling'])
     mask = np.array(data['mask'])
     offset = np.array(data['offset'])
@@ -163,11 +163,11 @@ def write_cluster_group_tsv(IDs, quality, output_directory, filename = 'cluster_
     cluster_group.tsv (written to disk)
 
     """
-       
+
     df = pd.DataFrame(data={'cluster_id' : IDs, 'group': quality})
-    
+
     print('Saving data...')
-    
+
     df.to_csv(os.path.join(output_directory, filename), sep='\t', index=False)
 
 
@@ -197,7 +197,7 @@ def read_cluster_group_tsv(filename):
     return cluster_ids, cluster_quality
 
 def read_cluster_amplitude_tsv(filename):
-    
+
     """
     Reads a tab-separated cluster_Amplitude.tsv file from disk
 
@@ -213,7 +213,7 @@ def read_cluster_amplitude_tsv(filename):
 
     """
     info = np.genfromtxt(filename, dtype='str')
-    # don't return cluster_ids because those are already read in or 
+    # don't return cluster_ids because those are already read in or
     # derived from the spike_clusters.npy file
     # cluster_ids = info[1:,0].astype('int')
     cluster_amplitude = info[1:,1].astype('float')
@@ -243,10 +243,10 @@ def load(folder, filename):
     return np.load(os.path.join(folder, filename))
 
 
-def load_kilosort_data(folder, 
-                       sample_rate = None, 
-                       convert_to_seconds = True, 
-                       use_master_clock = False, 
+def load_kilosort_data(folder,
+                       sample_rate = None,
+                       convert_to_seconds = True,
+                       use_master_clock = False,
                        include_pcs = False,
                        template_zero_padding= 21):
 
@@ -278,7 +278,7 @@ def load_kilosort_data(folder,
         Template IDs for N spikes
     amplitudes : numpy.ndarray (N x 0)
         Amplitudes for N spikes
-    unwhitened_temps : numpy.ndarray (M x samples x channels) 
+    unwhitened_temps : numpy.ndarray (M x samples x channels)
         Templates for M units
     channel_map : numpy.ndarray
         Channels from original data file used for sorting
@@ -303,7 +303,7 @@ def load_kilosort_data(folder,
         spike_times = load(folder,'spike_times_master_clock.npy')
     else:
         spike_times = load(folder,'spike_times.npy')
-        
+
     spike_clusters = load(folder,'spike_clusters.npy')
     spike_templates = load(folder, 'spike_templates.npy')
     amplitudes = load(folder,'amplitudes.npy')
@@ -312,35 +312,38 @@ def load_kilosort_data(folder,
     channel_map = load(folder, 'channel_map.npy')
     channel_pos = load(folder, 'channel_positions.npy')
 
+    # handles channel_map being read as 2-dimensional
+    channel_map = np.squeeze(channel_map).astype(int)
+
     if include_pcs:
         pc_features = load(folder, 'pc_features.npy')
         pc_feature_ind = load(folder, 'pc_feature_ind.npy')
-        template_features = load(folder, 'template_features.npy') 
+        template_features = load(folder, 'template_features.npy')
 
-                
+
     templates = templates[:,template_zero_padding:,:] # remove zeros
     spike_clusters = np.squeeze(spike_clusters) # fix dimensions
     spike_times = np.squeeze(spike_times)# fix dimensions
 
     if convert_to_seconds and sample_rate is not None:
-       spike_times = spike_times / sample_rate 
-                    
+       spike_times = spike_times / sample_rate
+
     unwhitened_temps = np.zeros((templates.shape))
-    
+
     for temp_idx in range(templates.shape[0]):
-        
+
         unwhitened_temps[temp_idx,:,:] = np.dot(np.ascontiguousarray(templates[temp_idx,:,:]),np.ascontiguousarray(unwhitening_mat))
-                    
+
     try:
         cluster_ids, cluster_quality = read_cluster_group_tsv(os.path.join(folder, 'cluster_group.tsv'))
     except OSError:
         cluster_ids = np.unique(spike_clusters)
         cluster_quality = ['unsorted'] * cluster_ids.size
-        
+
     cluster_amplitude = read_cluster_amplitude_tsv(os.path.join(folder, 'cluster_Amplitude.tsv'))
-    
-        
-        
+
+
+
 
     if not include_pcs:
         return spike_times, spike_clusters, spike_templates, amplitudes, unwhitened_temps, \
@@ -357,12 +360,12 @@ def get_spike_depths(spike_clusters, unit_template_ids, pc_features, pc_feature_
     Calculates the distance (in microns) of individual spikes from the probe tip
 
     This implementation is based on Matlab code from github.com/cortex-lab/spikes
-    
-    Needs to be called for a subset of spikes extracted with the majority template 
+
+    Needs to be called for a subset of spikes extracted with the majority template
     This is true for all spikes in data which has not been curated.
     Manual merges create clusters that derive from multiple templats, but this
     algorthim examines features from a single template -- so we select spikes
-    for each cluster that were extracted with the majority template before calling 
+    for each cluster that were extracted with the majority template before calling
     in metrics.py
 
     Input:
@@ -390,7 +393,7 @@ def get_spike_depths(spike_clusters, unit_template_ids, pc_features, pc_feature_
     pc_features_copy = np.squeeze(pc_features_copy[:,0,:])
     pc_features_copy[pc_features_copy < 0] = 0
     pc_power = pow(pc_features_copy, 2)
-    
+
     spike_feat_ind = pc_feature_ind[unit_template_ids[spike_clusters], :]
     spike_feat_ycoord = channel_pos[spike_feat_ind, 1]
     spike_depths = np.sum(spike_feat_ycoord * pc_power, 1) / np.sum(pc_power,1)
@@ -410,7 +413,7 @@ def get_spike_amplitudes(spike_templates, templates, amplitudes):
     -------
     spike_templates : numpy.ndarray (N x 0)
         Template IDs for N spikes
-    templates : numpy.ndarray (M x samples x channels) 
+    templates : numpy.ndarray (M x samples x channels)
         Unwhitened templates for M units
     amplitudes : numpy.ndarray (N x 0)
         Amplitudes for N spikes
@@ -465,7 +468,7 @@ def get_repo_commit_date_and_hash(repo_location):
 
 
 def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 0, length = 40, fill = '▒'):
-    
+
     """
     Call in a loop to create terminal progress bar
 
@@ -491,18 +494,18 @@ def printProgressBar(iteration, total, prefix = '', suffix = '', decimals = 0, l
     Outputs:
     --------
     None
-    
+
     """
-    
+
     percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
     filledLength = int(length * iteration // total)
     bar = fill * filledLength + '░' * (length - filledLength)
     sys.stdout.write('\r%s %s %s%% %s' % (prefix, bar, percent, suffix))
     sys.stdout.flush()
 
-    if iteration == total: 
+    if iteration == total:
         print()
-  
+
 def catGT_ex_params_from_str(ex_str):
     # starting from the comma delimeted CatGT string, return extraction
     # parameters.
@@ -511,13 +514,13 @@ def catGT_ex_params_from_str(ex_str):
     # <run name>_g<gate index>_tcat.nidq.<ex_name_str>.txt
     # for imec SY channels, the file of of extracted edges will be named:
     # <run name>_g<gate index>_tcat.imec<probe index>.txt
-    
-    # CatGT does not allow any spaces wihtin options, but there can be 
+
+    # CatGT does not allow any spaces wihtin options, but there can be
     # spaces between options in the command string, and these are
-    # appended to the comma delimited string parsed here. 
+    # appended to the comma delimited string parsed here.
     # Remove spaces before parsing
     ex_str = ex_str.replace(' ','') #replace any spare spaces with commas
-    
+
     eq_pos = ex_str.find('=')
     ex_type = ex_str[0:eq_pos]    # stream type (SY, iSY, XD, iXD, i)
     ex_parts = ex_str[eq_pos+1:].split(',')
@@ -567,19 +570,19 @@ def getSortResults(output_dir, clu_version):
     templates = np.load(os.path.join(output_dir, 'templates.npy'))
     channel_map = np.load(os.path.join(output_dir, 'channel_map.npy'))
     channel_map = np.squeeze(channel_map)
-    
+
     # read in inverse of whitening matrix
     w_inv = np.load((os.path.join(output_dir, 'whitening_mat_inv.npy')))
     nTemplate = templates.shape[0]
-    
+
     # initialize peak_channels array
     peak_channels = np.zeros([nLabel,],'uint32')
-    
-   
+
+
     # After manual splits or merges, some labels will have spikes found with
     # different templats.
     # for each label in the list unqLabel, get the most common template
-    # For that template (nt x nchan), multiply the the transpose (nchan x nt) by inverse of 
+    # For that template (nt x nchan), multiply the the transpose (nchan x nt) by inverse of
     # the whitening matrix (nchan x nchan); get max and min along tthe time axis (1)
     # to find the peak channel
     for i in np.arange(0,nLabel):
@@ -599,18 +602,18 @@ def getSortResults(output_dir, clu_version):
     else:
         clu_Name = 'clus_Table_' + repr(clu_version) + '.npy'
         np.save(os.path.join(output_dir, clu_Name), clus_Table)
- 
+
     return nTemplate, nTot
 
 def getFileVersion(input_filePath):
-    
+
     # arting from the base path name givin in the parameters
     # also return name for next file in series = next_file
     # If no file exists yet, return curr_file = 'none', new_file = input
-    
+
     next_version = 0;
     next_file = input_filePath
-    
+
     if os.path.exists(next_file):
         # loop over up to 20 versions with an added _1, _2 ...etc
         outPath = pathlib.Path(input_filePath).parent
@@ -620,9 +623,9 @@ def getFileVersion(input_filePath):
             nextName = outName + '_' + repr(version_idx) + outExt
             next_file = os.path.join(outPath, nextName)
             if os.path.exists(next_file) is False:
-                #break out of loop 
+                #break out of loop
                 next_version = version_idx
                 break
-    
+
 
     return next_file, next_version

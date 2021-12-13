@@ -1,4 +1,5 @@
 import os, io, json, sys
+import pathlib
 from dotenv import load_dotenv
 
 if sys.platform == 'linux':
@@ -37,6 +38,10 @@ def createInputJson(
                     kilosort_output_directory=None,
                     ks_make_copy=False,
                     probe_type='3A',
+                    sample_rate=30000,
+                    num_channels=385,
+                    reference_channels=[191],
+                    uVPerBit=2.34375,
                     catGT_run_name='test',
                     gate_string='0',
                     trigger_string='0,0',
@@ -56,6 +61,7 @@ def createInputJson(
                     tPrime_3A = False,
                     toStream_path_3A = None,
                     fromStream_list_3A = None,
+                    chanMap_path=None,
                     ks_remDup = 0,
                     ks_finalSplits = 1,
                     ks_labelGood = 1,
@@ -67,6 +73,7 @@ def createInputJson(
                     ks_CSBseed = 1,
                     ks_LTseed = 1,
                     ks_templateRadius_um = 163,
+                    use_C_Waves=True,
                     c_Waves_snr_um = 160,
                     qm_isi_thresh = 1.5/1000
                     ):
@@ -108,6 +115,14 @@ def createInputJson(
     cWaves_path = cWaves_path or os.getenv('cWaves_path')
     kilosort_output_tmp = kilosort_output_tmp or os.getenv('kilosort_output_tmp')
 
+    # filepath to chanMap.mat
+    if chanMap_path is None:
+        chanMap_path = "'chanMap.mat'"
+        chanMap_pregenerated = False
+    else:
+        chanMap_path = f"'{chanMap_path}'"
+        chanMap_pregenerated = True
+
     # derived directory names
 
     modules_directory = os.path.join(ecephys_directory,'modules')
@@ -117,14 +132,7 @@ def createInputJson(
          and npx_directory is None:
         raise Exception('Must specify at least one output directory')
 
-
-    #default ephys params. For spikeGLX, these get replaced by values read from metadata
-    sample_rate = 30000
-    num_channels = 385
-    reference_channels = [191]
-    uVPerBit = 2.34375
-    acq_system = 'PXI'
-
+    extracted_data_directory = extracted_data_directory or kilosort_output_directory
 
     if spikeGLX_data:
         # location of the raw data is the continuous file passed from script
@@ -141,14 +149,31 @@ def createInputJson(
             print('SpikeGLX params read from meta')
             print('probe type: {:s}, sample_rate: {:.5f}, num_channels: {:d}, uVPerBit: {:.4f}'.format\
                   (probe_type, sample_rate, num_channels, uVPerBit))
-        #print('kilosort output directory: ' + kilosort_output_directory )
 
+        lf_file = pathlib.Path(continuous_file).parent / pathlib.Path(continuous_file).name.replace('.ap.', '.lf.')
+        reorder_lfp_channels = True
 
+        settings_xml = npx_directory
+        probe_json = npx_directory
+        settings_json = npx_directory
     else:
-       print('currently only supporting spikeGLX data')
+        # Open Ephys system
+        if probe_type == '3A':
+            reference_channels = [36, 75, 112, 151, 188, 227, 264, 303, 340, 379]
+        else:
+            reference_channels = [191]
+
+        continuous_dir = pathlib.Path(continuous_file).parent
+        lf_file = continuous_dir.parent / ('.'.join(continuous_dir.name.split('.')[:-1]) + f'.{int(continuous_dir.name.split(".")[-1]) + 1}') / 'continuous.dat'
+
+        reorder_lfp_channels = probe_type == '3A'
+
+        settings_xml = os.path.join(npx_directory, 'settings.xml')
+        probe_json = os.path.join(extracted_data_directory, 'probe_info.json')
+        settings_json = os.path.join(extracted_data_directory, 'open-ephys.json')
 
 
-
+    lf_file = lf_file.as_posix()
 
     # geometry params by probe type. expand the dictoionaries to add types
     # vertical probe pitch vs probe type
@@ -193,7 +218,7 @@ def createInputJson(
     {
 
         "directories": {
-            "ecephys_directory":ecephys_directory,
+            "ecephys_directory": ecephys_directory,
             "npx_directory": npx_directory,
             "extracted_data_directory": extracted_data_directory,
             "kilosort_output_directory": kilosort_output_directory,
@@ -201,8 +226,8 @@ def createInputJson(
        },
 
         "common_files": {
-            "settings_json" : npx_directory,
-            "probe_json" : npx_directory,
+            "settings_json" : settings_json,
+            "probe_json" : probe_json,
         },
 
         "waveform_metrics" : {
@@ -222,14 +247,14 @@ def createInputJson(
             "reference_channels" : reference_channels,
             "vertical_site_spacing" : 10e-6,
             "ap_band_file" : continuous_file,
-            "lfp_band_file" : os.path.join(extracted_data_directory, 'continuous', 'Neuropix-' + acq_system + '-100.1', 'continuous.dat'),
-            "reorder_lfp_channels" : True,
+            "lfp_band_file" : lf_file,
+            "reorder_lfp_channels" : reorder_lfp_channels,
             "cluster_group_file_name" : 'cluster_group.tsv'
         },
 
         "extract_from_npx_params" : {
             "npx_directory": npx_directory,
-            "settings_xml": npx_directory,
+            "settings_xml": settings_xml,
             "npx_extractor_executable": r"C:\Users\svc_neuropix\Documents\GitHub\npxextractor\Release\NpxExtractor.exe",
             "npx_extractor_repo": r"C:\Users\svc_neuropix\Documents\GitHub\npxextractor"
         },
@@ -262,10 +287,11 @@ def createInputJson(
             "matlab_home_directory": kilosort_output_tmp,
             "kilosort_repository" : kilosort_repository,
             "npy_matlab_repository" : npy_matlab_repository,
-            "kilosort_version" : 2,
-            "spikeGLX_data" : True,
+            "kilosort_version" : int(float(KS2ver)),
+            "spikeGLX_data" : spikeGLX_data,
             "ks_make_copy": ks_make_copy,
             "surface_channel_buffer" : 15,
+            "chanMap_pregenerated": chanMap_pregenerated,
 
             "kilosort2_params" :
             {
@@ -276,7 +302,7 @@ def createInputJson(
                 "saveRez" : ks_saveRez,
                 "copy_fproc" : ks_copy_fproc,
                 "fproc" : fproc_str,
-                "chanMap" : "'chanMap.mat'",
+                "chanMap" : chanMap_path,
                 "fshigh" : 150,
                 "minfr_goodchannels" : ks_minfr_goodchannels,
                 "Th" : ks_Th,
@@ -313,7 +339,7 @@ def createInputJson(
             "spread_threshold" : 0.12,
             "site_range" : 16,
             "cWaves_path" : cWaves_path,
-            "use_C_Waves" : True,
+            "use_C_Waves" : use_C_Waves,
             "snr_radius" : c_waves_radius_sites
         },
 
