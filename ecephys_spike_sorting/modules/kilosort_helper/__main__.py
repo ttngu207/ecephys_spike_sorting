@@ -38,7 +38,8 @@ def run_kilosort(args):
                               args['ephys_params']['bit_volts'])
 
     # chanMap.mat section
-    metaName = Path(args['ephys_params']['ap_band_file']).stem
+    #metaName = Path(args['ephys_params']['ap_band_file']).stem # only return filename
+    metaName = os.path.splitext(args['ephys_params']['ap_band_file'])[0]
 
     if not args['kilosort_helper_params'].get('chanMap_pregenerated', False):
         # generate and write chanMap.mat file - different implementation for SpikeGLX and Open Ephys
@@ -88,7 +89,8 @@ def run_kilosort(args):
                                             os.path.basename(args['ephys_params']['ap_band_file']),
                                             args['kilosort_helper_params']['kilosort_params'])
 
-    elif args['kilosort_helper_params']['kilosort_version'] == 2:
+    elif args['kilosort_helper_params']['kilosort_version'] == 2 \
+         or args['kilosort_helper_params']['kilosort_version'] == 3:
 
         matlab_file_generator.create_config2(args['kilosort_helper_params']['matlab_home_directory'],
                                              output_dir_forward_slash,
