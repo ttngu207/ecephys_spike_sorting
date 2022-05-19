@@ -37,6 +37,8 @@ setup(
         'xarray',
         'scikit-learn',
         'python-dotenv',
-        'h5py'
+        'h5py',
+        'joblib',
+        'psutil'
     ],
 )

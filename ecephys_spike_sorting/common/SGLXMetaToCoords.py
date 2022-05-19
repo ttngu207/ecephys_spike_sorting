@@ -4,7 +4,7 @@ Requires python 3
 
 The main() function at the bottom of this file can run from an
 interpreter, or, the helper functions can be imported into a
-new module or Jupyter notebook (an example is included).
+new module or Jupyter notebook.
 
 Standalone program to generate a coordinate file from a SpikeGLX
 metadata file for 3A, NP1.0, or NP2 single shank or multishank probes.
@@ -240,6 +240,43 @@ def XYCoordUHD(meta, elecInd, showPlot):
         plt.show()
 
     return(xCoord, yCoord)
+    
+def XYCoordOpto(meta, elecInd, showPlot):
+    nElec = 384;    # per shank
+    vSep = 20;      # in um
+    hSep = 48;
+
+    elecPos = np.zeros((nElec,2), dtype='float')
+    
+    # fill in x and y values
+    for i in range(0, 2):
+        ind = np.arange(i, nElec, step=2, dtype='int')
+        elecPos[ind,0] = i*hSep             # i = 0 for site 0,2,4..., i = 1 for sites 1,3,5...
+        rowind = ind/2;
+        rowind = rowind.astype('int')
+        elecPos[ind,1] = rowind*vSep
+    
+
+    xCoord = elecPos[elecInd, 0]
+    yCoord = elecPos[elecInd, 1]
+
+    if showPlot:
+        # single shank probe. Plot only lowest selected electrode
+        
+        fig = plt.figure(figsize=(2,12))
+        
+        # plot all positions   
+        marker_style = dict(c='w', edgecolor = 'k', linestyle='None', marker='s', s=20)                 
+        plt.scatter(elecPos[:,0], elecPos[:,1], **marker_style)
+
+        # plot selected position
+        marker_style = dict(c='b', edgecolor='b', linestyle='None', marker='s', s=15)
+        plt.scatter(xCoord, yCoord, **marker_style)
+
+        plt.show()
+
+    return(xCoord, yCoord)
+
 
 # Return shank and electrode number for NP2.0 probes
 # Index into these with original (acquired) channel IDs.
@@ -471,7 +508,7 @@ def MetaToCoords(metaFullPath, outType, badChan= np.zeros((0), dtype = 'int'), d
         
     print(pType)
     
-    if pType <= 1 or pType == 1100:  
+    if pType <= 1 or pType == 1100 or pType == 1300:  
         # Neuropixels 1.0 or 3A probe
         
         # Get indices of electrodes
@@ -497,8 +534,12 @@ def MetaToCoords(metaFullPath, outType, badChan= np.zeros((0), dtype = 'int'), d
         # Get XY coords for saved channels
         if pType <= 1:
             [xCoord, yCoord] = XYCoord10(meta, elecInd, showPlot)
-        else:
+        elif pType == 1100:
             [xCoord, yCoord] = XYCoordUHD(meta, elecInd, showPlot)
+        elif pType == 1300:
+            [xCoord, yCoord] = XYCoordOpto(meta, elecInd, showPlot)
+        else:
+            print('unknown probe type in SGLXMetaToCoords')
 
     else:
         # Neuropixels type 21 (single shank) or 24 (four shank)
@@ -527,24 +568,31 @@ def MetaToCoords(metaFullPath, outType, badChan= np.zeros((0), dtype = 'int'), d
         [xCoord, yCoord] = XYCoord20(meta, elecInd, bankMask, shankInd, showPlot)
 
     baseName = metaFullPath.stem
-    # write output as text
-    if len(destFullPath) == 0:
-        savePath = metaFullPath.parent
-        buildPath = True
-    else:
-        buildPath = False
-        savePath = destFullPath
-    outputSwitch = {
-            0: CoordsToText,
-            1: CoordsToKSChanMap,
-            2: CoordsToJRCString,
-    }
     
-    writeFunc = outputSwitch.get(outType)
-    writeFunc(chans, xCoord, yCoord, connected, shankInd, shankSep, baseName, savePath, buildPath )
+    if outType > 0:
+        if len(destFullPath) == 0:
+            savePath = metaFullPath.parent
+            buildPath = True
+        else:
+            buildPath = False
+            savePath = destFullPath
+        outputSwitch = {
+                0: CoordsToText,
+                1: CoordsToKSChanMap,
+                2: CoordsToJRCString,
+        }
+        
+        writeFunc = outputSwitch.get(outType)
+        writeFunc(chans, xCoord, yCoord, connected, shankInd, shankSep, baseName, savePath, buildPath )
+    
+    return xCoord, yCoord, shankInd
     
 # Sample calling program to get a metadata file from the user,
 # output a file set by outType
+#   0 = tab delimited text file of coordinates in um, index, x, y, shank index
+#   1 = KS2 chan map .mat file
+#   2 = strings of channel map, shank index, and x,y pairs for JRClust
+# file is saved to the same path as the metadata file.
 #
 def main():
     

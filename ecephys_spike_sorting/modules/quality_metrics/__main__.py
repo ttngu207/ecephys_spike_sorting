@@ -29,7 +29,10 @@ def calculate_quality_metrics(args):
     
     output_file, metrics_version = getFileVersion(output_file_args)
 
+    print("kilosort_output_dir: ")
+    print(args['directories']['kilosort_output_directory'])
     print("Loading data...")
+
 
     try:
         if include_pcs:
@@ -48,8 +51,7 @@ def calculate_quality_metrics(args):
                         include_pcs = include_pcs)
             pc_features = []
             pc_feature_ind = []
-            
-
+                    
         metrics = calculate_metrics(spike_times, spike_clusters, spike_templates, amplitudes, channel_map, channel_pos, templates, pc_features, pc_feature_ind, args['quality_metrics_params'])
 
     except FileNotFoundError:
@@ -76,7 +78,7 @@ def calculate_quality_metrics(args):
 
     print("Saving data...")
    
-    metrics.to_csv(output_file)
+    metrics.to_csv(output_file, index=False )
 
     execution_time = time.time() - start
 

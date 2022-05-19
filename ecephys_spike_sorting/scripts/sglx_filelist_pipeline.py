@@ -39,13 +39,13 @@ ksTh_dict = {'default':'[10,4]', 'cortex':'[10,4]', 'medulla':'[10,4]', 'thalamu
 
 # Raw data directory = npx_directory
 # run_specs = name, gate, trigger and probes to process
-npx_directory = r'D:\ecephys_fork\test_data\SC_10trial'
+npx_directory = r'D:\ecephys_fork\test_data\file_list_test'
 
 # for each recording, specfiy a full path the the binary and a brain region
 
 recording_specs = [									
-				[r'D:\ecephys_fork\test_data\file_list_test\SC011_022319_g0_tcat.imec3.ap.bin', ['default'] ],
-                [r'D:\ecephys_fork\test_data\file_list_test\SC024_092319_NP1.0_Midbrain_g0_tcat.imec0.ap.bin', ['default'] ]              
+				[r'D:\ecephys_fork\test_data\file_list_test\SC024_092319_NP1.0_Midbrain_g0_tcat.imec0.ap.bin', ['default'] ]
+
 ]
 
 
@@ -63,6 +63,12 @@ ks_templateRadius_um = 163
 ks_whiteningRadius_um = 163
 ks_minfr_goodchannels = 0.1
 
+# If running KS20_for_preprocessed_data:
+# (https://github.com/jenniferColonell/KS20_for_preprocessed_data)
+# can skip filtering with the doFilter parameter.
+# Useful for speed when data has been filtered with CatGT.
+# This parameter is not implemented in standard versions of kilosort.
+ks_doFilter = 0
 
 # ----------------------
 # C_Waves snr radius, um
@@ -79,7 +85,6 @@ modules = [
 			'kilosort_helper',
             'kilosort_postprocessing',
             'noise_templates',
-            #'psth_events',
             'mean_waveforms',
             'quality_metrics'
 			]
@@ -169,6 +174,7 @@ for i, spec in enumerate(recording_specs):
                                    ks_copy_fproc = ks_copy_fproc,
                                    ks_minfr_goodchannels = ks_minfr_goodchannels,                  
                                    ks_whiteningRadius_um = ks_whiteningRadius_um,
+                                   ks_doFilter = ks_doFilter,
                                    ks_Th = ks_Th,
                                    ks_CSBseed = 1,
                                    ks_LTseed = 1,

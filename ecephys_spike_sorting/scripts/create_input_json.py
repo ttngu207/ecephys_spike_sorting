@@ -50,7 +50,7 @@ def createInputJson(
                     catGT_car_mode = 'gbldmx',
                     catGT_loccar_min_um = 40,
                     catGT_loccar_max_um = 160,
-                    catGT_cmd_string = '-prb_fld -out_prb_fld -aphipass=300-gfix=0.40,0.10,0.02',
+                    catGT_cmd_string = '-prb_fld -out_prb_fld',
                     noise_template_use_rf = True,
                     event_ex_param_str = 'XD=4,1,50',
                     tPrime_im_ex_list = 'SY=0,384,6,500',
@@ -62,7 +62,8 @@ def createInputJson(
                     toStream_path_3A = None,
                     fromStream_list_3A = None,
                     chanMap_path=None,
-                    ks_remDup = 0,
+                    ks_doFilter = 0,
+                    ks_remDup = 0,                   
                     ks_finalSplits = 1,
                     ks_labelGood = 1,
                     ks_saveRez = 1,
@@ -75,7 +76,8 @@ def createInputJson(
                     ks_templateRadius_um = 163,
                     use_C_Waves=True,
                     c_Waves_snr_um = 160,
-                    qm_isi_thresh = 1.5/1000
+                    qm_isi_thresh = 1.5/1000,
+                    include_pcs = True
                     ):
 
     # hard coded paths to code on your computer and system
@@ -177,13 +179,14 @@ def createInputJson(
 
     # geometry params by probe type. expand the dictoionaries to add types
     # vertical probe pitch vs probe type
-    vpitch = {'3A': 20, 'NP1': 20, 'NP21': 15, 'NP24': 15, 'NP1100': 6}
-    hpitch = {'3A': 32, 'NP1': 32, 'NP21': 32, 'NP24': 32, 'NP1100': 6}
-    nColumn = {'3A': 2, 'NP1': 2, 'NP21': 2, 'NP24': 2, 'NP1100': 8}
-
-
+    vpitch = {'3A': 20, 'NP1': 20, 'NP21': 15, 'NP24': 15, 'NP1100': 6, 'NP1300':20}  
+    hpitch = {'3A': 32, 'NP1': 32, 'NP21': 32, 'NP24': 32, 'NP1100': 6, 'NP1300':48} 
+    nColumn = {'3A': 2, 'NP1': 2, 'NP21': 2, 'NP24': 2, 'NP1100': 8,'NP1300':2} 
+    
+    
     # CatGT needs the inner and outer redii for local common average referencing
     # specified in sites
+
     catGT_loccar_min_sites = int(round(catGT_loccar_min_um/vpitch.get(probe_type)))
     catGT_loccar_max_sites = int(round(catGT_loccar_max_um/vpitch.get(probe_type)))
     # print('loccar min: ' + repr(catGT_loccar_min_sites))
@@ -199,20 +202,19 @@ def createInputJson(
 
     # nNeighbors is the number of sites kilosort includes in a template.
     # Calculate the number of sites within that radisu.
+    maxNeighbors = 64 # 64 for standard build of KS
     nrows = np.sqrt((np.square(ks_templateRadius_um) - np.square(hpitch.get(probe_type))))/vpitch.get(probe_type)
     ks_nNeighbors = int(round(2*nrows*nColumn.get(probe_type)))
-    if ks_nNeighbors > 64:
-        ks_nNeighbors = 64          #max allowed in CUDA
-    # print('ks_nNeighbors: ' + repr(ks_nNeighbors))
-
+    if ks_nNeighbors > maxNeighbors:
+        ks_nNeighbors = maxNeighbors          
+    print('ks_nNeighbors: ' + repr(ks_nNeighbors))
+    
     c_waves_radius_sites = int(round(c_Waves_snr_um/vpitch.get(probe_type)))
 
     # Create string designating temporary output file for KS2 (gets inserted into KS2 config.m file)
     fproc = os.path.join(kilosort_output_tmp,'temp_wh.dat') # full path for temp whitened data file
     fproc_forward_slash = fproc.replace('\\','/')
     fproc_str = "'" + fproc_forward_slash + "'"
-
-
 
     dictionary = \
     {
@@ -258,7 +260,7 @@ def createInputJson(
             "npx_extractor_executable": r"C:\Users\svc_neuropix\Documents\GitHub\npxextractor\Release\NpxExtractor.exe",
             "npx_extractor_repo": r"C:\Users\svc_neuropix\Documents\GitHub\npxextractor"
         },
-
+ 
         "depth_estimation_params" : {
             "hi_noise_thresh" : 50.0,
             "lo_noise_thresh" : 3.0,
@@ -269,9 +271,9 @@ def createInputJson(
             "diff_thresh" : -0.06,
             "freq_range" : [0, 10],
             "max_freq" : 150,
-            "channel_range" : [374, 384],
+            "saline_range_um" : [3700, 3800],
             "n_passes" : 10,
-            "air_gap" : 25,
+            "air_gap_um" : 1000,
             "time_interval" : 5,
             "skip_s_per_pass" : 10,
             "start_time" : 10
@@ -303,6 +305,7 @@ def createInputJson(
                 "copy_fproc" : ks_copy_fproc,
                 "fproc" : fproc_str,
                 "chanMap" : chanMap_path,
+                "doFilter" : ks_doFilter,
                 "fshigh" : 150,
                 "minfr_goodchannels" : ks_minfr_goodchannels,
                 "Th" : ks_Th,
@@ -316,12 +319,16 @@ def createInputJson(
                 "CSBseed" : ks_CSBseed,
                 "LTseed" : ks_LTseed,
                 "whiteningRange" : ks_whiteningRange,
-                "nNeighbors" : ks_nNeighbors
+                "nNeighbors" : ks_nNeighbors,
+                "CAR" : 0
             }
         },
 
 # as implemented, "within_unit_overlap window" must be >= "between unit overlap window"
         "ks_postprocessing_params" : {
+            "align_avg_waveform" : False,              
+            "remove_duplicates" : True,
+            "cWaves_path" : cWaves_path,
             "within_unit_overlap_window" : 0.000333,
             "between_unit_overlap_window" : 0.000333,
             "between_unit_dist_um" : 42,
@@ -353,6 +360,7 @@ def createInputJson(
         "quality_metrics_params" : {
             "isi_threshold" : qm_isi_thresh,
             "min_isi" : 0.000166,
+            "tbin_sec" : 0.001,
             "max_radius_um" : 68,
             "max_spikes_for_unit" : 500,
             "max_spikes_for_nn" : 10000,

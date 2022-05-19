@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import psutil
 from collections import OrderedDict
 
 import warnings
@@ -11,6 +12,7 @@ from sklearn.metrics import silhouette_score
 from scipy.spatial.distance import cdist
 from scipy.stats import chi2
 from scipy.ndimage.filters import gaussian_filter1d
+from scipy import special
 
 from ...common.epoch import Epoch
 from ...common.utils import printProgressBar, get_spike_depths
@@ -40,10 +42,11 @@ def calculate_metrics(spike_times, spike_clusters, spike_templates, amplitudes, 
         Pre-computed PCs for blocks of channels around each spike
     pc_feature_ind : numpy.ndarray (num_units x num_channels)
         Channel indices of PCs for each unit
-    epochs : list of Epoch objects
-        contains information on Epoch start and stop times
     params : dict of parameters
         'isi_threshold' : minimum time for isi violations
+        'tbin_sec' : time bin for ccg for contam_rate
+    epochs : list of Epoch objects
+        contains information on Epoch start and stop times
 
     
     Outputs:
@@ -85,8 +88,11 @@ def calculate_metrics(spike_times, spike_clusters, spike_templates, amplitudes, 
         in_epoch = (spike_times > epoch.start_time) * (spike_times < epoch.end_time)
 
         print("Calculating isi violations")
-        isi_viol = calculate_isi_violations(spike_times[in_epoch], spike_clusters[in_epoch], total_units, params['isi_threshold'], params['min_isi'])
+        isi_viol, num_viol = calculate_isi_violations(spike_times[in_epoch], spike_clusters[in_epoch], total_units, params['isi_threshold'], params['min_isi'])
         
+        print("Calculating contamination rate")
+        contam_rate = calculate_contam_rate(spike_times[in_epoch], spike_clusters[in_epoch], total_units, params['tbin_sec'], params['isi_threshold'])
+
         print("Calculating presence ratio")
         presence_ratio = calculate_presence_ratio(spike_times[in_epoch], spike_clusters[in_epoch], total_units)
 
@@ -163,8 +169,10 @@ def calculate_metrics(spike_times, spike_clusters, spike_templates, amplitudes, 
                                 ('firing_rate' , firing_rate),
                                 ('presence_ratio' , presence_ratio),
                                 ('isi_viol' , isi_viol),
+                                ('num_viol', num_viol),
                                 ('amplitude_cutoff' , amplitude_cutoff),
                                 ('isolation_distance' , isolation_distance),
+                                ('contam_rate', contam_rate),
                                 ('l_ratio' , l_ratio),
                                 ('d_prime' , d_prime),
                                 ('nn_hit_rate' , nn_hit_rate),
@@ -188,19 +196,21 @@ def calculate_isi_violations(spike_times, spike_clusters, total_units, isi_thres
     cluster_ids = np.unique(spike_clusters)
 
     viol_rates = np.zeros((total_units,))
+    
+    num_viol =np.zeros((total_units,))
 
     for idx, cluster_id in enumerate(cluster_ids):
 
         printProgressBar(idx+1, len(cluster_ids))
 
         for_this_cluster = (spike_clusters == cluster_id)
-        viol_rates[cluster_id], num_violations = isi_violations(spike_times[for_this_cluster], 
-                                                       min_time = np.min(spike_times), 
-                                                       max_time = np.max(spike_times), 
-                                                       isi_threshold=isi_threshold, 
-                                                       min_isi = min_isi)
+        viol_rates[cluster_id], num_viol[cluster_id] = isi_violations(spike_times[for_this_cluster], 
+                                                               min_time = np.min(spike_times), 
+                                                               max_time = np.max(spike_times), 
+                                                               isi_threshold=isi_threshold, 
+                                                               min_isi = min_isi)
 
-    return viol_rates
+    return viol_rates, num_viol
 
 def calculate_presence_ratio(spike_times, spike_clusters, total_units):
 
@@ -257,6 +267,24 @@ def calculate_amplitude_cutoff(spike_clusters, amplitudes, total_units):
         amplitude_cutoffs[cluster_id] = amplitude_cutoff(amplitudes[for_this_cluster])
 
     return amplitude_cutoffs
+
+
+def calculate_contam_rate(spike_times, spike_clusters, total_units, tbin_sec, refPer_sec):
+
+    cluster_ids = np.unique(spike_clusters)
+
+    contam_rate = np.ones((total_units,))
+
+    for idx, cluster_id in enumerate(cluster_ids):
+
+        printProgressBar(idx + 1, len(cluster_ids))
+
+        curr_st_sec = spike_times[spike_clusters == cluster_id]
+        
+        if len(curr_st_sec) > 10: 
+            contam_rate[cluster_id] = contamination_rate(curr_st_sec, tbin_sec, refPer_sec)           
+
+    return contam_rate
 
 
 def calculate_pc_metrics(spike_clusters,
@@ -319,6 +347,7 @@ def calculate_pc_metrics(spike_clusters,
 #            else half_spread
 
         # which templates have pcs on the peak channel of the current unit?
+        # channel index -- which of the channel swithin the set for a single template -- i snot used
         templates_for_channel, channel_index = np.unravel_index(np.where(pc_feature_ind.flatten() == peak_channel)[0], pc_feature_ind.shape)
 
 
@@ -344,14 +373,13 @@ def calculate_pc_metrics(spike_clusters,
         if len(units_in_range) > 1 :
 
             units_for_channel = np.asarray(units_for_channel[units_in_range])
-            
-            channel_index = channel_index[units_in_range]
+                    
     
 # OLDER calculatioon assuming linear array
 #           channels_to_use = np.arange(peak_channel - half_spread_down, peak_channel + half_spread_up + 1)
             
             channels_to_use = np.where(chan_dist < max_radius_um)[0]
-    
+
     
             spike_counts = np.zeros(units_for_channel.shape, dtype = 'int')
     
@@ -512,23 +540,50 @@ def calculate_drift_metrics(spike_times,
     maj_tid = unit_template_ids[spike_clusters]
     match_maj = spike_templates==maj_tid
     
-    spike_clusters = spike_clusters[match_maj]
-    spike_times = spike_times[match_maj]
-    pc_features = pc_features[match_maj]
+    # calculate size of the arrays we'll be copying
+    # 2*(number of spikes*4) for spike_times and spike_clusters
+    # number of spikes*number of template channels*4 for first pc on each site
+#    pc_size = pc_features.shape
+#    nmatch = match_maj.shape
+#    memuse = 2*nmatch[0]*4 + nmatch[0]*pc_size[2]*4
+
+#    print("expected size of new memory: " + repr(memuse))
+#    currmem = psutil.Process().memory_info().rss / (1024 * 1024)
+#    print("psutil memory info before copies: " + repr(currmem))
     
-    depths = get_spike_depths(spike_clusters, unit_template_ids, pc_features, pc_feature_ind, channel_pos)
+    
+    # make arrays of just those spikes for which the template matches the 
+    # majority template for htat cluster. These operations make copies of the
+    # arrays.
+    m_spike_clusters = spike_clusters[match_maj]
+    m_spike_times = spike_times[match_maj]
+    
+    # same for pc_features, but we only need the first pc for each
+    # this operation makes a copy of pc_features so original is not altered
+    m_pc_features_sq = np.squeeze(pc_features[match_maj,0,:]);
+    # set negative pc_features to zero before taking square
+    m_pc_features_sq[m_pc_features_sq < 0] = 0
+    # elementwise square
+    m_pc_features_sq = pow(m_pc_features_sq, 2) 
+    
+#    currmem = psutil.Process().memory_info().rss / (1024 * 1024)
+#    print("psutil memory info after copies: " + repr(currmem))
+    
+#    send only
+    
+    depths = get_spike_depths(m_spike_clusters, unit_template_ids, m_pc_features_sq, pc_feature_ind, channel_pos)
     
     interval_starts = np.arange(np.min(spike_times), np.max(spike_times), interval_length)
     interval_ends = interval_starts + interval_length
 
-    cluster_ids = np.unique(spike_clusters)
+    cluster_ids = np.unique(m_spike_clusters)
 
     for idx, cluster_id in enumerate(cluster_ids):
 
         printProgressBar(idx+1, len(cluster_ids))
 
-        in_cluster = spike_clusters == cluster_id
-        times_for_cluster = spike_times[in_cluster]
+        in_cluster = m_spike_clusters == cluster_id
+        times_for_cluster = m_spike_times[in_cluster]
         depths_for_cluster = depths[in_cluster]
 
         median_depths = []
@@ -997,3 +1052,128 @@ def get_unit_pcs(these_pc_features, index_mask, spike_templates, channels_to_use
             unit_PCs = np.append(unit_PCs,curr_pcs,axis=0)
     
     return unit_PCs
+
+
+def ccg(st1, st2, nbins, tbin, auto):
+    
+    """ calculate crosscorrelogram between two sets of spike times (st1, st2)
+        in seconds, with bin width tbin, time lags = plus/minus nbins.
+        Algorithm from Kilosort2, written by Marius Pachitariu
+        
+    st1 : spike times for set #1 in sec
+    st2 : spike times for set #2 in sec
+    nbins : ccg will be calculated for 2*nbins + 1, 
+    tbin : bin width in seconds
+    
+    output:
+        
+    K = ccg histogram
+    Qi
+    Q00
+    Q01
+    
+    """
+    # print('ccg num spikes = ' + repr(len(st1)))
+    st1 = np.sort(np.squeeze(st1))
+    st2 = np.sort(np.squeeze(st2))
+    
+    dt = nbins*tbin  # cross correlogram spans -dt-dt
+    
+    T = max(np.max(st1),np.max(st2)) - min(np.min(st1),np.min(st2))
+    
+    # traverse both spike trains together, keeping track of the spikes in the first
+    # spike train that are within dt of the second spike train
+    ilow = 0
+    ihigh = 0
+    j = 0
+    
+    n_st2 = len(st2)
+    n_st1 = len(st1)
+    
+    K = np.zeros((2*nbins+1,))
+    
+    while j < n_st2:                      # walk over all spikes in 2nd spike train
+        while (ihigh < n_st1) and (st1[ihigh] < st2[j]+dt):            
+            ihigh = ihigh + 1             # increase upper bound until its outisde the dt range
+        while (ilow < n_st1) and (st1[ilow] <= st2[j]-dt):
+            ilow = ilow + 1                # increase lower bound until it is inside the dt range
+        if ilow > n_st1:
+            break
+        if st1[ilow] > st2[j] + dt:
+            # if the lower bound is actually outside of the dt range, means
+            # there were no spikes in range of the ccg
+            # just move on to next spike st2
+            j = j + 1
+            continue
+        for k in range(ilow,ihigh):
+            # for all spikes within the plus/minus dt range
+            ibin = int(np.round((st2[j]-st1[k])/tbin))    # calculate which bin
+            K[ibin + nbins] = K[ibin + nbins] + 1    # increment corresponding bin in correlogram
+        j = j + 1   # go to next spike in st2
+        
+    if auto:
+        # print('nspikes, zero bin: ' + repr(n_st1) + ', ' + repr(K[nbins]))
+        # if this is an autocorrelogram, remove the self-found spikes from the zero bin
+        K[nbins] = K[nbins] - n_st1     # remove "self found" spikes from 
+    
+    irange1 = np.concatenate((np.arange(1, int(nbins/2)), np.arange(int(3/2*nbins), 2*nbins-1)),0) # this index range corresponds to the CCG shoulders, excluding end bins
+    irange2 = np.arange(nbins-50, nbins-10)  # 40 channels to negative side of peak
+    irange3 = np.arange(nbins+10, nbins+50)  # 40 channels to positive side of peak
+    
+    # Normalize the firing rate in the shoulders by the mean firing rate
+    # A Poisson process has a flat ACG (equal numbers of spikes at all ISIs) and these ratios would = 1
+    mean_firing_rate = (n_st2)/T
+    Q00 = (sum(K[irange1])/(n_st1 * tbin * len(irange1)))/mean_firing_rate
+    Q01_neg = (sum(K[irange2])/(n_st1 * tbin * len(irange2)))/mean_firing_rate
+    Q01_pos = (sum(K[irange3])/(n_st1 * tbin * len(irange3)))/mean_firing_rate
+    Q01 = max(Q01_neg, Q01_pos)
+    
+    #print('firing rate, Q00, Q01: ' + repr(mean_firing_rate) + ', ' + repr(Q00) + ', ' + repr(Q01))
+    
+    # Get highest spike rate of the sampled time regions
+    R00 = max(np.mean(K[irange2]), np.mean(K[irange3])) # Larger of the two shoulders near t = 0
+    R00 = max(R00, np.mean(K[irange1])) # compare this to the asymptotic shoulder
+    
+    # Calculate "refractoriness for periods from 1*tbin to 10*tbin
+    Qi = np.zeros((11,))
+    Ri = np.zeros((11,))
+    for i in range(1,11):
+        irange = np.arange(nbins-i,nbins+i)
+        Qi[i] = (sum(K[irange])/(2*i*tbin+1))/mean_firing_rate    #rate in this time period/mean rate
+        #print( 'K[nbins-i], Qi: ' + repr(K[nbins-i]) + ', ' + repr( Qi[i]))
+        
+
+        # Marius note: this is tricky: we approximate the Poisson likelihood with a gaussian of equal mean and variance
+        # that allows us to integrate the probability that we would see <N spikes in the center of the
+        # cross-correlogram from a distribution with mean R00*i spikes
+        
+        # this calculation is done in KS2 but never used
+        # n = sum(K[irange])/2
+        # lam = R00 + i
+        # Ri[i] =  1/2 * (1+ special.erf((n - lam)/np.sqrt(2*lam)))
+        
+    return K, Qi, Q00, Q01, Ri
+
+def contamination_rate(st_sec, tbin_sec, refPer_sec):
+    # given a set of spike times in sec, calculate the KS2 contamination percent
+    # differences from the KS2 standard calc:
+    #      when calculating an acg (as here) only remove self-counted spikes (rather than zeroing the lowest bin)
+    #      this will give higher values for the contamination rate when there are duplicate spikes
+    #
+    #      instead of just taking the range of the acg with the lowest contamination, take the range corresponding
+    #      to the user specified refractory period. This will also usually give higher values for the contamination rate.
+    
+    refPerBin = int(refPer_sec/tbin_sec)
+    if refPerBin == 0:
+        refPerBin = 1   # if refractory period < bin size, take the first bin
+    
+    K, Qi, Q00, Q01, rir = ccg(st_sec, st_sec, 500, tbin_sec, True); # compute the auto-correlogram with 500 bins at 1ms bins
+    
+    normFactor = (max(Q00, Q01))
+    
+    if normFactor > 0:
+        contam_rate  = Qi[refPerBin]/normFactor # get the Q[i] that includes the refractory period
+    else:
+        contam_rate = 1
+    
+    return contam_rate

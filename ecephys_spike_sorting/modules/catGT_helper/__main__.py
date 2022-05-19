@@ -17,8 +17,11 @@ def run_CatGT(args):
     catGTPath = args['catGT_helper_params']['catGTPath']
     if sys.platform.startswith('win'):
         # build windows command line
-        catGTexe_fullpath = catGTPath.replace('\\', '/') + "/runit.bat"
-    elif sys.platform.startswith('linux'):
+        # catGTexe_fullpath = catGTPath.replace('\\', '/') + "/runit.bat"
+        # call catGT directly with params. CatGT.log file will be saved lcoally
+        # in current working directory (with the calling script)
+        catGTexe_fullpath = catGTPath.replace('\\', '/') + "/CatGT"
+    elif sys.platform.starstwith('linux'):
         catGTexe_fullpath = catGTPath.replace('\\', '/') + "/runit.sh"
     else:
         print('unknown system, cannot run CatGt')
