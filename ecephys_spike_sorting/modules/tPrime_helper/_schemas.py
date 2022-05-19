@@ -3,6 +3,7 @@ from argschema.schemas import DefaultSchema
 from argschema.fields import Nested, InputDir, String, Float, Dict, Int, List, Boolean
 from ...common.schemas import EphysParams, Directories
 from ..catGT_helper._schemas import CatGTParams
+from ..kilosort_helper._schemas import KilosortHelperParameters
 
 
 class tPrimeParams(DefaultSchema):
@@ -19,6 +20,7 @@ class tPrimeParams(DefaultSchema):
 class InputParameters(ArgSchema):
     tPrime_helper_params = Nested(tPrimeParams)
     catGT_helper_params = Nested(CatGTParams)
+    kilosort_helper_params = Nested(KilosortHelperParameters)
     directories = Nested(Directories)
     ephys_params = Nested(EphysParams)
 
