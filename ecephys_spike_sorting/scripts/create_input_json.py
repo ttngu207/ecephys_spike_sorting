@@ -1,5 +1,6 @@
 import os, io, json, sys
 import pathlib
+import re
 from dotenv import load_dotenv
 
 if sys.platform == 'linux':
@@ -165,8 +166,18 @@ def createInputJson(
         else:
             reference_channels = [191]
 
-        continuous_dir = pathlib.Path(continuous_file).parent
-        lf_file = continuous_dir.parent / ('.'.join(continuous_dir.name.split('.')[:-1]) + f'.{int(continuous_dir.name.split(".")[-1]) + 1}') / 'continuous.dat'
+        continuous_dir = pathlib.Path(continuous_file).parent.as_posix()
+
+        try:
+            # old probe folder convention with 100.0, 100.1, 100.2, 100.3, etc.
+            name, num = re.search(r"(.+\.)(\d)+$", continuous_dir).groups()
+        except AttributeError:
+            # new probe folder convention with -AP or -LFP
+            assert continuous_dir.endswith("AP")
+            continuous_dir = re.sub("-AP$", "-LFP", continuous_dir)
+        else:
+            continuous_dir = f"{name}{int(num)+1}"
+        lf_file = pathlib.Path(continuous_dir) / 'continuous.dat'
 
         reorder_lfp_channels = probe_type == '3A'
 
