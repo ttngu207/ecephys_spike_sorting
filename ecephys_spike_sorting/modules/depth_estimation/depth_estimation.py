@@ -1,4 +1,4 @@
-import glob    
+import glob
 import json
 import os
 
@@ -12,7 +12,7 @@ from ...common.utils import find_range, rms, printProgressBar
 from ...common.OEFileInfo import get_lfp_channel_order
 from ...common.SGLXMetaToCoords import MetaToCoords
 
-def compute_channel_offsets(ap_data, ephys_params, params, xCoord, yCoord):
+def compute_channel_offsets(ap_data, ephys_params, params, xCoord=None, yCoord=None):
 
     """
     Computes DC offset for AP band data
@@ -56,7 +56,7 @@ def compute_channel_offsets(ap_data, ephys_params, params, xCoord, yCoord):
             offsets[ch,i] = np.median(data)
             median_subtr = data - offsets[ch,i]
             rms_noise[ch,i] = rms(median_subtr) * ephys_params['bit_volts']
-        
+
     mask = np.ones((numChannels,), dtype=bool)
     mask[ephys_params['reference_channels']] = False
     mask[np.median(rms_noise,1) > params['hi_noise_thresh']] = False
@@ -67,9 +67,8 @@ def compute_channel_offsets(ap_data, ephys_params, params, xCoord, yCoord):
         'mask' : mask,
         'scaling' : np.ones((numChannels,)),
         'offsets' : np.median(offsets,1).astype('int16'),
-        'vertical_pos' : 20*(np.floor(np.arange(0,numChannels)/2)+1).astype('int'),
-        'horizontal_pos' : np.array([43,11,59,27] * int(numChannels / 4))
-
+        'vertical_pos' : yCoord or 20*(np.floor(np.arange(0,numChannels)/2)+1).astype('int'),
+        'horizontal_pos' : xCoord or np.array([43,11,59,27] * int(numChannels / 4))
     }
 
     return output_dict
@@ -93,14 +92,14 @@ def find_surface_channel(lfp_data, ephys_params, params, xCoord, yCoord, shankIn
     output_dict : dict
         - surface_y : channel at brain surface
         - air_y : channel at agar / air surface (approximate)
-        
+
     """
-    
+
     nchannels = ephys_params['num_channels']
     sample_frequency = ephys_params['lfp_sample_rate']
-    
+
     lfp_samples, lfp_channels = lfp_data.shape
-    
+
 
     smoothing_amount = params['smoothing_amount']
     power_thresh = params['power_thresh']
@@ -113,7 +112,7 @@ def find_surface_channel(lfp_data, ephys_params, params, xCoord, yCoord, shankIn
     save_figure = params['save_figure']
 
     candidates = np.zeros((n_passes,))
-    
+
     samples_per_pass = int(sample_frequency*(params['skip_s_per_pass'] + 1))
     max_passes = int(np.floor(lfp_samples/samples_per_pass))
     passes_used = min(n_passes, max_passes)
@@ -123,46 +122,46 @@ def find_surface_channel(lfp_data, ephys_params, params, xCoord, yCoord, shankIn
     # remove reference channels
     channels = np.delete(channels, ephys_params['reference_channels'])
     nchannels_used = channels.size
-    
+
     chan_y = np.squeeze(yCoord[channels])
     in_saline_range = np.squeeze((chan_y > saline_range[0]) & (chan_y < saline_range[1]))
     saline_chan = np.where(in_saline_range)
-    
+
     max_y = np.max(chan_y)
-    
-    
+
+
     for p in range(passes_used):
-        
+
         startPt = int(sample_frequency*params['skip_s_per_pass']*p)
         endPt = startPt + int(sample_frequency)
-    
+
         chunk = np.copy(lfp_data[startPt:endPt,channels])
 #        print('chunk shape: ')
 #        print(chunk.shape)
-        
+
         # subtract dc offset for all channels
         for ch in np.arange(nchannels_used):
             chunk[:,ch] = chunk[:,ch] - np.median(chunk[:,ch])
-        
+
         # reduce noise by correcting each timepoint with the signal in saline
         for ch in np.arange(nchannels_used):
             saline_chunk = np.squeeze(chunk[:,saline_chan])
             saline_median = np.median(saline_chunk,1)
             chunk[:,ch] = chunk[:,ch] - saline_median
-        
+
         power = np.zeros((int(nfft/2+1), nchannels_used))
-    
+
         for ch in np.arange(nchannels_used):
 
             printProgressBar(p * nchannels_used + ch + 1, nchannels_used * n_passes)
 
             sample_frequencies, Pxx_den = welch(chunk[:,ch], fs=sample_frequency, nfft=nfft)
             power[:,ch] = Pxx_den
-        
+
         in_range = find_range(sample_frequencies, 0, params['max_freq'])
-        
+
         in_range_gamma = find_range(sample_frequencies, freq_range[0],freq_range[1])
-        
+
         values = np.log10(np.mean(power[in_range_gamma,:],0))
 
         values = gaussian_filter1d(values,smoothing_amount)
@@ -174,7 +173,7 @@ def find_surface_channel(lfp_data, ephys_params, params, xCoord, yCoord, shankIn
             candidates[p] = np.max(surface_y)
         else:
             candidates[p] = max_y
-      
+
     surface_y = np.median(candidates)
     air_y = np.min([surface_y + params['air_gap_um'], max_y])
 
@@ -184,30 +183,30 @@ def find_surface_channel(lfp_data, ephys_params, params, xCoord, yCoord, shankIn
     }
 
     if save_figure:
-        plot_results(chunk, 
-                     power, 
-                     in_range, 
-                     values, 
+        plot_results(chunk,
+                     power,
+                     in_range,
+                     values,
                      nchannels_used,
                      chan_y,
-                     surface_y, 
-                     power_thresh, 
-                     diff_thresh, 
+                     surface_y,
+                     power_thresh,
+                     diff_thresh,
                      params['figure_location'])
 
     return output_dict
 
 
 
-def plot_results(chunk, 
-                 power, 
-                 in_range, 
-                 values, 
+def plot_results(chunk,
+                 power,
+                 in_range,
+                 values,
                  nchannels,
                  chan_y,
-                 surface_y, 
-                 power_thresh, 
-                 diff_thresh, 
+                 surface_y,
+                 power_thresh,
+                 diff_thresh,
                  figure_location):
 
     plt.figure(figsize=(5,10))
@@ -225,16 +224,16 @@ def plot_results(chunk,
 
     y_sorted = chan_y[chunk_order]
     plt.subplot(4,1,3)
-    plt.plot(y_sorted, values[chunk_order]) 
+    plt.plot(y_sorted, values[chunk_order])
     plt.plot([chan_y[0],chan_y[nchannels-1]],[power_thresh,power_thresh],'--k')
-    
+
     surface_index = np.min(np.where(y_sorted > surface_y))
     plt.plot([surface_index, surface_index],[-2, 2],'--r')
-    
+
     plt.subplot(4,1,4)
     plt.plot(y_sorted[0:nchannels-1], np.diff(values[chunk_order]))
     plt.plot([chan_y[0],chan_y[nchannels-2]],[diff_thresh,diff_thresh],'--k')
-    
+
     plt.plot([surface_y, surface_y],[-0.2, diff_thresh],'--r')
     plt.title(surface_y)
     plt.savefig(figure_location)
