@@ -54,7 +54,7 @@ def run_depth_estimation(args):
             chanMap = spio.loadmat(chanMap_path.as_posix(), squeeze_me=True, struct_as_record=False)
             xCoord = chanMap['xcoords']
             yCoord = chanMap['ycoords']
-            shankInd = chanMap['shankInd']
+            shankInd = chanMap['shankInd'] - 1  # convert back to 0-based indexing
         else:
             xCoord = info_ap['horizontal_pos']
             yCoord = info_ap['vertical_pos']
