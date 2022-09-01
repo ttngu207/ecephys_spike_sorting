@@ -3,6 +3,7 @@ import os
 import logging
 import time
 from pathlib import Path
+import scipy.io as spio
 
 import numpy as np
 
@@ -28,10 +29,30 @@ def run_depth_estimation(args):
     print('depth_estimation LFP path is: '+ raw_path)
     dataLfp = np.reshape(rawDataLfp, (int(rawDataLfp.size/numChannels), numChannels))
 
-    metaName, binExt = os.path.splitext(args['ephys_params']['ap_band_file'])
-    metaFullPath = Path(metaName + '.meta')
+    print('Computing channel offsets...')
 
-    [xCoord, yCoord, shankInd] = MetaToCoords(metaFullPath, -1, badChan= np.zeros((0), dtype = 'int'), destFullPath = '', showPlot=False)
+    info_ap = compute_channel_offsets(dataAp,
+                                  args['ephys_params'],
+                                  args['depth_estimation_params'])
+
+    if Path(args['ephys_params']['ap_band_file']).name.endswith('.ap.bin'):
+        # SpikeGLX
+        metaName, binExt = os.path.splitext(args['ephys_params']['ap_band_file'])
+        metaFullPath = Path(metaName + '.meta')
+        [xCoord, yCoord, shankInd] = MetaToCoords(metaFullPath, -1, badChan= np.zeros((0), dtype = 'int'), destFullPath = '', showPlot=False)
+    else:
+        # OpenEphys
+        chanMap_path = args['kilosort_helper_params']['kilosort2_params'].get('chanMap')
+        if chanMap_path is not None and Path(chanMap_path.strip("'")).exists():
+            chanMap_path = Path(chanMap_path.strip("'"))
+            chanMap = spio.loadmat(chanMap_path.as_posix(), squeeze_me=True, struct_as_record=False)
+            xCoord = chanMap['xcoords']
+            yCoord = chanMap['ycoords']
+            shankInd = chanMap['shankInd']
+        else:
+            xCoord = info_ap['horizontal_pos']
+            yCoord = info_ap['vertical_pos']
+            shankInd = np.full_like(xCoord, 0)  # hard-code to shank 0
 
     print('Computing surface channel...')
 
@@ -42,25 +63,11 @@ def run_depth_estimation(args):
                                 yCoord,
                                 shankInd)
 
-    # computing channel offsets is irrelevant for data prepocessed with catGT
-    #
-#    print('Computing channel offsets...')
-#
-#    info_ap = compute_channel_offsets(dataAp,
-#                                   args['ephys_params'],
-#                                   args['depth_estimation_params'])
-
-#    write_probe_json(args['common_files']['probe_json'],
-#                     info_ap['channels'],
-#                     info_ap['offsets'],
-#                     info_ap['scaling'],
-#                     info_ap['mask'],
-#                     info_lfp['surface_channel'],
-#                     info_lfp['air_channel'],
-#                     xCoord,
-#                     yCoord)
-
     write_probe_json(args['common_files']['probe_json'],
+                     info_ap['channels'],
+                     info_ap['offsets'],
+                     info_ap['scaling'],
+                     info_ap['mask'],
                      info_lfp['surface_y'],
                      info_lfp['air_y'],
                      np.squeeze(yCoord),
