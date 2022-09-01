@@ -42,9 +42,15 @@ def run_depth_estimation(args):
         [xCoord, yCoord, shankInd] = MetaToCoords(metaFullPath, -1, badChan= np.zeros((0), dtype = 'int'), destFullPath = '', showPlot=False)
     else:
         # OpenEphys
-        chanMap_path = args['kilosort_helper_params']['kilosort2_params'].get('chanMap')
-        if chanMap_path is not None and Path(chanMap_path.strip("'")).exists():
-            chanMap_path = Path(chanMap_path.strip("'"))
+        for d in (args['directories']['kilosort_output_directory'],
+                  args['directories']['kilosort_output_tmp']):
+            chanMap_path = Path(d) / 'chanMap.mat'
+            if chanMap_path.exists():
+                break
+        else:
+            chanMap_path = None
+
+        if chanMap_path:
             chanMap = spio.loadmat(chanMap_path.as_posix(), squeeze_me=True, struct_as_record=False)
             xCoord = chanMap['xcoords']
             yCoord = chanMap['ycoords']
