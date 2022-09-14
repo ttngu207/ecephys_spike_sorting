@@ -37,6 +37,10 @@ def createInputJson(
                     input_meta_path=None,
                     extracted_data_directory=None,
                     kilosort_output_directory=None,
+                    npx_extractor_executable=None,
+                    npx_extractor_repo=None,
+                    median_subtraction_executable=None,
+                    median_subtraction_repo=None,
                     ks_make_copy=False,
                     probe_type='3A',
                     sample_rate=30000,
@@ -81,29 +85,8 @@ def createInputJson(
                     include_pcs = True
                     ):
 
-    # hard coded paths to code on your computer and system
-    # ecephys_directory = r'D:\ecephys_fork\ecephys_spike_sorting\ecephys_spike_sorting'
-    # this is passed through arguements now
-
-    # location of kilosor respository and kilosort version
-
-    # kilosort_repository = r'C:\Users\labadmin\Documents\jic\KS3_fork\Kilosort2'
-    # KS2ver = '2.0'      # must equal '3.0', '2.5' or '2.0', and match the kiilosort_repository
-    # these are passed through arguements now
-
     # KS 3.0 does not yet output pcs.
     include_pcs = KS2ver != '3.0'
-
-    #npy_matlab_repository = r'C:\Users\labadmin\Documents\jic\npy-matlab-master'
-    #catGTPath = r'C:\Users\labadmin\Documents\jic\CatGT-win'
-    #tPrime_path=r'C:\Users\labadmin\Documents\jic\TPrime-win'
-    #cWaves_path=r'C:\Users\labadmin\Documents\jic\C_Waves-win'
-    # these are passed through arguements now
-
-
-    # for config files and kilosort working space
-    # kilosort_output_tmp = r'D:\kilosort_datatemp'
-    # this is passed through arguements now
 
     dot_env_path = "config/sglx_process_probe.json"
     if os.path.exists(dot_env_path):
@@ -117,6 +100,11 @@ def createInputJson(
     tPrime_path = tPrime_path or os.getenv('tPrime_path')
     cWaves_path = cWaves_path or os.getenv('cWaves_path')
     kilosort_output_tmp = kilosort_output_tmp or os.getenv('kilosort_output_tmp')
+
+    npx_extractor_executable = npx_extractor_executable or os.getenv('npx_extractor_executable')
+    npx_extractor_repo = npx_extractor_repo or os.getenv('npx_extractor_repo')
+    median_subtraction_executable = median_subtraction_executable or os.getenv('median_subtraction_executable')
+    median_subtraction_repo = median_subtraction_repo or os.getenv('median_subtraction_repo')
 
     # filepath to chanMap.mat
     if chanMap_path is None:
@@ -268,8 +256,8 @@ def createInputJson(
         "extract_from_npx_params" : {
             "npx_directory": npx_directory,
             "settings_xml": settings_xml,
-            "npx_extractor_executable": r"C:\Users\svc_neuropix\Documents\GitHub\npxextractor\Release\NpxExtractor.exe",
-            "npx_extractor_repo": r"C:\Users\svc_neuropix\Documents\GitHub\npxextractor"
+            "npx_extractor_executable": npx_extractor_executable,
+            "npx_extractor_repo": npx_extractor_repo
         },
  
         "depth_estimation_params" : {
@@ -291,8 +279,8 @@ def createInputJson(
         },
 
         "median_subtraction_params" : {
-            "median_subtraction_executable": "C:\\Users\\svc_neuropix\\Documents\\GitHub\\spikebandmediansubtraction\\Builds\\VisualStudio2013\\Release\\SpikeBandMedianSubtraction.exe",
-            "median_subtraction_repo": "C:\\Users\\svc_neuropix\\Documents\\GitHub\\spikebandmediansubtraction\\",
+            "median_subtraction_executable": median_subtraction_executable,
+            "median_subtraction_repo": median_subtraction_repo,
         },
 
         "kilosort_helper_params" : {

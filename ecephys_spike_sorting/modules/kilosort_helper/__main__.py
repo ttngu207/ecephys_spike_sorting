@@ -135,6 +135,9 @@ def run_kilosort(args):
                           args['kilosort_helper_params']['kilosort2_params']['saveRez'], \
                           nargout=0)
 
+    # catch and show any uncaught exception
+    eng.eval('exception = MException.last;', nargout=0)
+    eng.eval('fprintf(getReport(exception))')
 
     # set dat_path in params.py
     #    if the user has not requested a copy of the procecess temp_wh file
