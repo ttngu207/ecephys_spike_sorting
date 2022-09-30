@@ -32,7 +32,8 @@ def createInputJson(
                     cWaves_path=None,
                     kilosort_output_tmp=None,
                     npx_directory=None,
-                    continuous_file = None,
+                    continuous_file=None,
+                    lf_file=None,
                     spikeGLX_data=True,
                     input_meta_path=None,
                     extracted_data_directory=None,
@@ -141,7 +142,8 @@ def createInputJson(
             print('probe type: {:s}, sample_rate: {:.5f}, num_channels: {:d}, uVPerBit: {:.4f}'.format\
                   (probe_type, sample_rate, num_channels, uVPerBit))
 
-        lf_file = pathlib.Path(continuous_file).parent / pathlib.Path(continuous_file).name.replace('.ap.', '.lf.')
+        if lf_file is None:
+            lf_file = pathlib.Path(continuous_file).parent / pathlib.Path(continuous_file).name.replace('.ap.', '.lf.')
         reorder_lfp_channels = True
 
         settings_xml = npx_directory
@@ -154,18 +156,18 @@ def createInputJson(
         else:
             reference_channels = [191]
 
-        continuous_dir = pathlib.Path(continuous_file).parent.as_posix()
-
-        try:
-            # old probe folder convention with 100.0, 100.1, 100.2, 100.3, etc.
-            name, num = re.search(r"(.+\.)(\d)+$", continuous_dir).groups()
-        except AttributeError:
-            # new probe folder convention with -AP or -LFP
-            assert continuous_dir.endswith("AP")
-            continuous_dir = re.sub("-AP$", "-LFP", continuous_dir)
-        else:
-            continuous_dir = f"{name}{int(num)+1}"
-        lf_file = pathlib.Path(continuous_dir) / 'continuous.dat'
+        if lf_file is None:
+            continuous_dir = pathlib.Path(continuous_file).parent.as_posix()
+            try:
+                # old probe folder convention with 100.0, 100.1, 100.2, 100.3, etc.
+                name, num = re.search(r"(.+\.)(\d)+$", continuous_dir).groups()
+            except AttributeError:
+                # new probe folder convention with -AP or -LFP
+                assert continuous_dir.endswith("AP")
+                continuous_dir = re.sub("-AP$", "-LFP", continuous_dir)
+            else:
+                continuous_dir = f"{name}{int(num)+1}"
+            lf_file = pathlib.Path(continuous_dir) / 'continuous.dat'
 
         reorder_lfp_channels = probe_type == '3A'
 
@@ -173,8 +175,7 @@ def createInputJson(
         probe_json = os.path.join(extracted_data_directory, 'probe_info.json')
         settings_json = os.path.join(extracted_data_directory, 'open-ephys.json')
 
-
-    lf_file = lf_file.as_posix()
+    lf_file = pathlib.Path(lf_file).as_posix()
 
     # geometry params by probe type. expand the dictoionaries to add types
     # vertical probe pitch vs probe type
