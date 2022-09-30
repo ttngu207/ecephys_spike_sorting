@@ -175,7 +175,6 @@ def createInputJson(
         probe_json = os.path.join(extracted_data_directory, 'probe_info.json')
         settings_json = os.path.join(extracted_data_directory, 'open-ephys.json')
 
-
     lf_file = pathlib.Path(lf_file).as_posix()
 
     # geometry params by probe type. expand the dictoionaries to add types
