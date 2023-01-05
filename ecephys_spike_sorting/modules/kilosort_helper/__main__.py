@@ -1,14 +1,13 @@
-import matlab.engine  # on some systems, the matlab engine must be loaded first
+try:
+    import matlab.engine  # on some systems, the matlab engine must be loaded first
+except Exception as e:
+    print(f'Error in loading "matlab.engine" package - {str(e)}')
 
 from argschema import ArgSchemaParser
 import os
 import time
 import shutil
-
 import numpy as np
-
-
-
 from pathlib import Path
 
 from scipy.signal import butter, filtfilt, medfilt
@@ -18,6 +17,7 @@ from ...common.SGLXMetaToCoords import MetaToCoords
 from ...common.utils import read_probe_json, get_repo_commit_date_and_hash, rms
 
 def run_kilosort(args):
+    import matlab.engine
     print('ecephys spike sorting: kilosort helper module')
 
     print('master branch -- single main KS2/KS25/KS3')
