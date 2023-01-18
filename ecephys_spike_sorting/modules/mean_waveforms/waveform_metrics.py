@@ -403,7 +403,7 @@ def calculate_2D_features(waveform, timestamps, peak_channel, site_x, site_y, sp
     ydiff = ( site_y != site_y[peak_channel])
     n_channel = site_x.size
     min_dist = 1e6   # a value larger than the  distance to nn
-    x_nn = -1
+    chan_nn = -1
     amp_nn = 0
     x_peak = site_x[peak_channel]
 
@@ -414,10 +414,10 @@ def calculate_2D_features(waveform, timestamps, peak_channel, site_x, site_y, sp
             # largest amplitude
             currAmp = np.max(waveform[i,:]) - np.min(waveform[i,:])
             if currAmp > amp_nn:
-                x_nn = site_x[i]
+                chan_nn = i
 
     # select among sites with x = x_peak and x_nn for sites to sample
-    inCol = (site_x == x_peak) | (site_x == x_nn)
+    inCol = (site_x == x_peak)
     sort_dist_ind = np.argsort(dist)
     sites_to_sample = np.zeros(site_range+1, dtype='int32')
 
@@ -427,7 +427,7 @@ def calculate_2D_features(waveform, timestamps, peak_channel, site_x, site_y, sp
     # list of channels to sample
     while nfound < site_range and i < n_channel:
         curr_chan = sort_dist_ind[i]
-        if inCol[curr_chan]:
+        if inCol[curr_chan] or (curr_chan == chan_nn):
             sites_to_sample[nfound] = curr_chan
             nfound = nfound + 1
             # print('site, dist: ' + repr(curr_chan) + ',' + repr(dist[curr_chan]))
