@@ -80,14 +80,13 @@ def createInputJson(
                     ks_CSBseed = 1,
                     ks_LTseed = 1,
                     ks_templateRadius_um = 163,
+                    ks_nblocks = 5,
+                    ks_CAR = 0,
                     use_C_Waves=True,
                     c_Waves_snr_um = 160,
                     qm_isi_thresh = 1.5/1000,
                     include_pcs = True
                     ):
-
-    # KS 3.0 does not yet output pcs.
-    include_pcs = KS2ver != '3.0'
 
     dot_env_path = "config/sglx_process_probe.json"
     if os.path.exists(dot_env_path):
@@ -106,6 +105,9 @@ def createInputJson(
     npx_extractor_repo = npx_extractor_repo or os.getenv('npx_extractor_repo')
     median_subtraction_executable = median_subtraction_executable or os.getenv('median_subtraction_executable')
     median_subtraction_repo = median_subtraction_repo or os.getenv('median_subtraction_repo')
+
+    # KS 3.0 does not yet output pcs.
+    include_pcs = KS2ver != '3.0'
 
     # filepath to chanMap.mat
     if chanMap_path is None:
@@ -320,7 +322,8 @@ def createInputJson(
                 "LTseed" : ks_LTseed,
                 "whiteningRange" : ks_whiteningRange,
                 "nNeighbors" : ks_nNeighbors,
-                "CAR" : 0
+                "CAR" : ks_CAR,
+                "nblocks" : ks_nblocks
             }
         },
 
