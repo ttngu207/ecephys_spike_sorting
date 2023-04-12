@@ -84,6 +84,8 @@ def createInputJson(
                     ks_CAR = 0,
                     use_C_Waves=True,
                     c_Waves_snr_um = 160,
+                    wm_spread_thresh = 0.12,
+                    wm_site_range = 16,
                     qm_isi_thresh = 1.5/1000,
                     include_pcs = True
                     ):
@@ -346,8 +348,8 @@ def createInputJson(
             "pre_samples" : 20,
             "num_epochs" : 1,           #epochs not implemented for c_waves
             "spikes_per_epoch" : 1000,
-            "spread_threshold" : 0.12,
-            "site_range" : 16,
+            "spread_threshold" : wm_spread_thresh,
+            "site_range" : wm_site_range,    
             "cWaves_path" : cWaves_path,
             "use_C_Waves" : use_C_Waves,
             "snr_radius" : c_waves_radius_sites

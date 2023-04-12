@@ -94,9 +94,8 @@ def calculate_mean_waveforms(args):
         cmd_parts.append(' -snr_radius='+repr(args['mean_waveform_params']['snr_radius']))
 
         # make the C_Waves call
-        #subprocess.call(cwaves_cmd)
-        subprocess.call(cmd_parts)
-
+        subprocess.Popen(cwaves_cmd,shell='False').wait()
+        
         # for first version, retain original names
         if clu_version == 0:
             mean_waveform_fullpath = os.path.join(dest, 'mean_waveforms.npy')
