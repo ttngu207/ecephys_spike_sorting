@@ -51,7 +51,7 @@ def call_TPrime(args):
         
         # if toStream is an imec probe, create the file of spike times in sec
         prb_dir = prb_dir_prefix + str(toStream_ip)
-        ks_outdir = 'imec' + str(toStream_ip) + '_ks2'        
+        ks_outdir = 'imec' + str(toStream_ip) + '_ks' + args['kilosort_helper_params']['kilosort2_params']['KSver']        
         st_file = os.path.join(run_directory, prb_dir, ks_outdir, 'spike_times.npy')
         # convert to seconds; if bNPY = True, returned file is an npy file
         # otherwise, text.
@@ -65,7 +65,7 @@ def call_TPrime(args):
         for i, id in enumerate(from_list_ids):
             if id[0] == 2:      # imec stream
                 prb_dir = prb_dir_prefix + str(id[1])
-                ks_outdir = 'imec' + str(id[1]) + '_ks2'
+                ks_outdir = 'imec' + str(id[1]) + '_ks' + args['kilosort_helper_params']['kilosort2_params']['KSver']
                 st_file = os.path.join(run_directory, prb_dir, ks_outdir, 'spike_times.npy')
                 # convert to seconds; if bNPY = True, returned file is an npy file
                 # otherwise, text.
@@ -153,7 +153,7 @@ def call_TPrime(args):
             toStream_path = os.path.join(run_directory, prb_dir, toStream_name)
             
             # convert events in the toStream to sec; they will not be adjusted
-            ks_outdir = 'imec' + str(toStream_prb) + '_ks2'
+            ks_outdir = 'imec' + str(toStream_prb) + '_ks' + args['kilosort_helper_params']['kilosort2_params']['KSver']
             st_file = os.path.join(run_directory, prb_dir, ks_outdir, 'spike_times.npy')
             # convert to seconds; if bNPY = True, returned file is an npy file
             # otherwise, text.
@@ -190,7 +190,7 @@ def call_TPrime(args):
                 from_list.append(os.path.join(run_directory, prb_dir, c_name))
                 c_index = len(from_stream_index)
                 # build path to spike times npy file
-                ks_outdir = 'imec' + str(c_prb) + '_ks2'
+                ks_outdir = 'imec' + str(c_prb) + '_ks' + args['kilosort_helper_params']['kilosort2_params']['KSver']
                 st_file = os.path.join(run_directory, prb_dir, ks_outdir, 'spike_times.npy')
                 st_file_sec = spike_times_npy_to_sec(st_file, 0, bNPY)
                 events_list.append(st_file_sec)
@@ -280,7 +280,7 @@ def call_TPrime(args):
                 from_list.append(os.path.join(run_directory, prb_dir, c_name))
                 c_index = len(from_stream_index)
                 # build path to spike times npy file
-                ks_outdir = 'imec' + str(c_prb) + '_ks2'
+                ks_outdir = 'imec' + str(c_prb) + '_ks' + args['kilosort_helper_params']['kilosort2_params']['KSver']
                 st_file = os.path.join(run_directory, prb_dir, ks_outdir, 'spike_times.npy')
                 st_file_sec = spike_times_npy_to_sec(st_file, 0, bNPY)
                 events_list.append(st_file_sec)
