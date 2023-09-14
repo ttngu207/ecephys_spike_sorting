@@ -85,6 +85,7 @@ def createInputJson(
                     ks_nblocks = 5,
                     ks_CAR = 0,
                     ks_output_tag = 'ks2',
+                    use_C_Waves=True,
                     c_Waves_snr_um = 160,
                     wm_spread_thresh = 0.12,
                     wm_site_range = 16,
@@ -386,7 +387,7 @@ def createInputJson(
             "spread_threshold" : wm_spread_thresh,
             "site_range" : wm_site_range,    
             "cWaves_path" : cWaves_path,
-            "use_C_Waves" : True,
+            "use_C_Waves" : use_C_Waves,
             "snr_radius" : c_waves_radius_sites,
             "snr_radius_um" : c_Waves_snr_um
         },
