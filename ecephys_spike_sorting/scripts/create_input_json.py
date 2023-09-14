@@ -358,7 +358,7 @@ def createInputJson(
             "sigmaMask" : 30,
             "fshigh" : 300,
             "fslow" : 10000,
-            "minfr_goodchannels" : 0,
+            "minfr_goodchannels" : ks_minfr_goodchannels,
             "whiteningRange" : ks_whiteningRange,            
             "deterministic_mode" : True,            
             "nblocks" : ks_nblocks,
