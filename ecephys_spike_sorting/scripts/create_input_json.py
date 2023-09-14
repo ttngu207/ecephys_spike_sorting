@@ -52,11 +52,13 @@ def createInputJson(
                     gate_string='0',
                     trigger_string='0,0',
                     probe_string='0',
+                    depth_est_fig = 0,
                     catGT_stream_string = '-ap',
                     catGT_car_mode = 'gbldmx',
                     catGT_loccar_min_um = 40,
                     catGT_loccar_max_um = 160,
                     catGT_cmd_string = '-prb_fld -out_prb_fld',
+                    catGT_maxZ_um = -1,
                     noise_template_use_rf = True,
                     event_ex_param_str = 'XD=4,1,50',
                     tPrime_im_ex_list = 'SY=0,384,6,500',
@@ -82,7 +84,7 @@ def createInputJson(
                     ks_templateRadius_um = 163,
                     ks_nblocks = 5,
                     ks_CAR = 0,
-                    use_C_Waves=True,
+                    ks_output_tag = 'ks2',
                     c_Waves_snr_um = 160,
                     wm_spread_thresh = 0.12,
                     wm_site_range = 16,
@@ -141,10 +143,15 @@ def createInputJson(
         #
         #
         if input_meta_path is not None:
-            probe_type, sample_rate, num_channels, uVPerBit = SpikeGLX_utils.EphysParams(input_meta_path)
+            probe_type, sample_rate, num_channels, reference_channels, \
+            uVPerBit, useGeom = SpikeGLX_utils.EphysParams(input_meta_path) 
+            
             print('SpikeGLX params read from meta')
             print('probe type: {:s}, sample_rate: {:.5f}, num_channels: {:d}, uVPerBit: {:.4f}'.format\
                   (probe_type, sample_rate, num_channels, uVPerBit))
+            print('reference channels: ' + repr(reference_channels))
+        
+        #print('kilosort output directory: ' + kilosort_output_directory )
 
         if lf_file is None:
             lf_file = pathlib.Path(continuous_file).parent / pathlib.Path(continuous_file).name.replace('.ap.', '.lf.')
@@ -219,7 +226,10 @@ def createInputJson(
     fproc = os.path.join(kilosort_output_tmp,'temp_wh.dat') # full path for temp whitened data file
     fproc_forward_slash = fproc.replace('\\','/')
     fproc_str = "'" + fproc_forward_slash + "'"
-
+    
+    # Deduce sort outptut tag from kilosort_output_directory
+    
+     
     dictionary = \
     {
 
@@ -268,7 +278,7 @@ def createInputJson(
         "depth_estimation_params" : {
             "hi_noise_thresh" : 50.0,
             "lo_noise_thresh" : 3.0,
-            "save_figure" : 1,
+            "save_figure" : depth_est_fig,
             "figure_location" : os.path.join(extracted_data_directory, 'probe_depth.png'),
             "smoothing_amount" : 5,
             "power_thresh" : 2.5,
@@ -328,21 +338,46 @@ def createInputJson(
                 "nblocks" : ks_nblocks
             }
         },
+            
+        "pykilosort_helper_params" : {
+            "preprocessing_function" : 'kilosort2',           
+            "copy_fproc" : ks_copy_fproc,
+            "fproc" : fproc_str,
+            "seed" : ks_LTseed,
+            "ks2_mode" : False,
+            "perform_drift_registration" : True,
+            "car" : ks_CAR,
+            "Th" : ks_Th,
+            "ThPre" : 8,
+            "lam" : 10,
+            "AUCsplit" : 0.9,
+            "minFR" : 1/50.,
+            "momentum" : '[20 400]',
+            "sig_datashift" : 20,
+            "sigmaMask" : 30,
+            "fshigh" : 300,
+            "fslow" : 10000,
+            "minfr_goodchannels" : 0,
+            "whiteningRange" : ks_whiteningRange,            
+            "deterministic_mode" : True,            
+            "nblocks" : ks_nblocks,
+            "doFilter" : ks_doFilter
 
-# as implemented, "within_unit_overlap window" must be >= "between unit overlap window"
+        },
+            
+
         "ks_postprocessing_params" : {
             "align_avg_waveform" : False,              
             "remove_duplicates" : True,
             "cWaves_path" : cWaves_path,
-            "within_unit_overlap_window" : 0.000333,
-            "between_unit_overlap_window" : 0.000333,
-            "between_unit_dist_um" : 42,
+            "within_unit_overlap_window" : 0.00017,
+            "between_unit_overlap_window" : 0.00041,
+            "between_unit_dist_um" : 66,
             "deletion_mode" : 'lowAmpCluster',
             "include_pcs" : include_pcs
         },
 
-        "mean_waveform_params" : {
-
+        "mean_waveform_params" : {     
             "mean_waveforms_file" : os.path.join(kilosort_output_directory, 'mean_waveforms.npy'),
             "samples_per_spike" : 82,
             "pre_samples" : 20,
@@ -351,8 +386,9 @@ def createInputJson(
             "spread_threshold" : wm_spread_thresh,
             "site_range" : wm_site_range,    
             "cWaves_path" : cWaves_path,
-            "use_C_Waves" : use_C_Waves,
-            "snr_radius" : c_waves_radius_sites
+            "use_C_Waves" : True,
+            "snr_radius" : c_waves_radius_sites,
+            "snr_radius_um" : c_Waves_snr_um
         },
 
 
@@ -385,6 +421,10 @@ def createInputJson(
             "car_mode" : catGT_car_mode,
             "loccar_inner" : catGT_loccar_min_sites,
             "loccar_outer": catGT_loccar_max_sites,
+            "loccar_inner_um" : catGT_loccar_min_um,
+            "loccar_outer_um" : catGT_loccar_max_um,
+            "maxZ_um" : catGT_maxZ_um,
+            'useGeom' : useGeom,
             "cmdStr" : catGT_cmd_string,
             "catGTPath" : catGTPath
         },
@@ -398,9 +438,11 @@ def createInputJson(
                 "ni_sync_params" : niStream_sync_params,
                 "tPrime_3A" : tPrime_3A,
                 "toStream_path_3A" : toStream_path_3A,
-                "fromStream_list_3A" : fromStream_list_3A
-        },
-
+                "fromStream_list_3A" : fromStream_list_3A,
+                "psth_ex_str": event_ex_param_str,
+                "sort_out_tag": ks_output_tag
+        },  
+                
         "psth_events": {
                 "event_ex_param_str": event_ex_param_str
          }

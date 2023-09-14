@@ -148,8 +148,11 @@ def main():
     """Main entry point:"""
     mod = ArgSchemaParser(schema_type=InputParameters,
                           output_schema_type=OutputParameters)
-
-    output = get_psth_events(mod.args)
+    
+    # output = get_psth_events(mod.args)
+    print('psth_events module is deprecated.')
+    print('events.csv files now created by TPrime_helper.')
+    output = {"execution_time": 0}
 
     output.update({"input_parameters": mod.args})
     if "output_json" in mod.args:

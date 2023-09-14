@@ -13,6 +13,10 @@ class CatGTParams(DefaultSchema):
     car_mode = String(require=False, default='None', help='Comaon average reference mode. Must = None, gbldmx, or loccar ')
     loccar_inner = Int(require=False, default=2, help='Inner radius for loccar in sites')
     loccar_outer = Int(require=False, default=8, help='Outer radius for loccar in sites')
+    loccar_inner_um = Int(require=False, default=40, help='Inner radius for loccar in um')
+    loccar_outer_um = Int(require=False, default=40, help='Outer radius for loccar in um')
+    maxZ_um = Float(require=False, default=-1, help='If > -1, maximum z from bottom row to analyze and save')
+    useGeom = Bool(require=False, default=True, help='use snsGeomMap for loccar and depth')
     cmdStr = String(required=True, default='-prbfld -aphipass=300 -gbldmx -gfix=0.40,0.10,0.02', help='input stream filter, error correct and extract settings for CatGT')
     catGTPath = InputDir(help='directory containing the CatGT executable.')
 

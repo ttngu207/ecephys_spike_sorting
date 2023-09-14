@@ -7,9 +7,9 @@ import scipy.io as spio
 
 import numpy as np
 
-from .depth_estimation import compute_channel_offsets, find_surface_channel
-from ...common.utils import write_probe_json
-from ...common.SGLXMetaToCoords import MetaToCoords
+from ecephys_spike_sorting.modules.depth_estimation.depth_estimation import compute_channel_offsets, find_surface_channel
+from ecephys_spike_sorting.common.utils import write_probe_json
+from ecephys_spike_sorting.common.SGLXMetaToCoords import MetaToCoords
 
 def run_depth_estimation(args):
 
@@ -92,7 +92,7 @@ def run_depth_estimation(args):
 
 def main():
 
-    from ._schemas import InputParameters, OutputParameters
+    from ecephys_spike_sorting.modules.depth_estimation._schemas import InputParameters, OutputParameters
 
     mod = ArgSchemaParser(schema_type=InputParameters,
                           output_schema_type=OutputParameters)
