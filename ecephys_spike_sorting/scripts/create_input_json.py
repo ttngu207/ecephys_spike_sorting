@@ -71,7 +71,7 @@ def createInputJson(
                     fromStream_list_3A = None,
                     chanMap_path=None,
                     ks_doFilter = 0,
-                    ks_remDup = 0,                   
+                    ks_remDup = 0,
                     ks_finalSplits = 1,
                     ks_labelGood = 1,
                     ks_saveRez = 1,
@@ -145,13 +145,13 @@ def createInputJson(
         #
         if input_meta_path is not None:
             probe_type, sample_rate, num_channels, reference_channels, \
-            uVPerBit, useGeom = SpikeGLX_utils.EphysParams(input_meta_path) 
-            
+            uVPerBit, useGeom = SpikeGLX_utils.EphysParams(input_meta_path)
+
             print('SpikeGLX params read from meta')
             print('probe type: {:s}, sample_rate: {:.5f}, num_channels: {:d}, uVPerBit: {:.4f}'.format\
                   (probe_type, sample_rate, num_channels, uVPerBit))
             print('reference channels: ' + repr(reference_channels))
-        
+
         #print('kilosort output directory: ' + kilosort_output_directory )
 
         if lf_file is None:
@@ -163,6 +163,7 @@ def createInputJson(
         settings_json = npx_directory
     else:
         # Open Ephys system
+        useGeom = False
         if probe_type == '3A':
             reference_channels = [36, 75, 112, 151, 188, 227, 264, 303, 340, 379]
         else:
@@ -191,11 +192,11 @@ def createInputJson(
 
     # geometry params by probe type. expand the dictoionaries to add types
     # vertical probe pitch vs probe type
-    vpitch = {'3A': 20, 'NP1': 20, 'NP21': 15, 'NP24': 15, 'NP1100': 6, 'NP1300':20}  
-    hpitch = {'3A': 32, 'NP1': 32, 'NP21': 32, 'NP24': 32, 'NP1100': 6, 'NP1300':48} 
-    nColumn = {'3A': 2, 'NP1': 2, 'NP21': 2, 'NP24': 2, 'NP1100': 8,'NP1300':2} 
-    
-    
+    vpitch = {'3A': 20, 'NP1': 20, 'NP21': 15, 'NP24': 15, 'NP1100': 6, 'NP1300':20}
+    hpitch = {'3A': 32, 'NP1': 32, 'NP21': 32, 'NP24': 32, 'NP1100': 6, 'NP1300':48}
+    nColumn = {'3A': 2, 'NP1': 2, 'NP21': 2, 'NP24': 2, 'NP1100': 8,'NP1300':2}
+
+
     # CatGT needs the inner and outer redii for local common average referencing
     # specified in sites
 
@@ -218,19 +219,19 @@ def createInputJson(
     nrows = np.sqrt((np.square(ks_templateRadius_um) - np.square(hpitch.get(probe_type))))/vpitch.get(probe_type)
     ks_nNeighbors = int(round(2*nrows*nColumn.get(probe_type)))
     if ks_nNeighbors > maxNeighbors:
-        ks_nNeighbors = maxNeighbors          
+        ks_nNeighbors = maxNeighbors
     print('ks_nNeighbors: ' + repr(ks_nNeighbors))
-    
+
     c_waves_radius_sites = int(round(c_Waves_snr_um/vpitch.get(probe_type)))
 
     # Create string designating temporary output file for KS2 (gets inserted into KS2 config.m file)
     fproc = os.path.join(kilosort_output_tmp,'temp_wh.dat') # full path for temp whitened data file
     fproc_forward_slash = fproc.replace('\\','/')
     fproc_str = "'" + fproc_forward_slash + "'"
-    
+
     # Deduce sort outptut tag from kilosort_output_directory
-    
-     
+
+
     dictionary = \
     {
 
@@ -275,7 +276,7 @@ def createInputJson(
             "npx_extractor_executable": npx_extractor_executable,
             "npx_extractor_repo": npx_extractor_repo
         },
- 
+
         "depth_estimation_params" : {
             "hi_noise_thresh" : 50.0,
             "lo_noise_thresh" : 3.0,
@@ -339,9 +340,9 @@ def createInputJson(
                 "nblocks" : ks_nblocks
             }
         },
-            
+
         "pykilosort_helper_params" : {
-            "preprocessing_function" : 'kilosort2',           
+            "preprocessing_function" : 'kilosort2',
             "copy_fproc" : ks_copy_fproc,
             "fproc" : fproc_str,
             "seed" : ks_LTseed,
@@ -359,16 +360,16 @@ def createInputJson(
             "fshigh" : 300,
             "fslow" : 10000,
             "minfr_goodchannels" : ks_minfr_goodchannels,
-            "whiteningRange" : ks_whiteningRange,            
-            "deterministic_mode" : True,            
+            "whiteningRange" : ks_whiteningRange,
+            "deterministic_mode" : True,
             "nblocks" : ks_nblocks,
             "doFilter" : ks_doFilter
 
         },
-            
+
 
         "ks_postprocessing_params" : {
-            "align_avg_waveform" : False,              
+            "align_avg_waveform" : False,
             "remove_duplicates" : True,
             "cWaves_path" : cWaves_path,
             "within_unit_overlap_window" : 0.00017,
@@ -378,14 +379,14 @@ def createInputJson(
             "include_pcs" : include_pcs
         },
 
-        "mean_waveform_params" : {     
+        "mean_waveform_params" : {
             "mean_waveforms_file" : os.path.join(kilosort_output_directory, 'mean_waveforms.npy'),
             "samples_per_spike" : 82,
             "pre_samples" : 20,
             "num_epochs" : 1,           #epochs not implemented for c_waves
             "spikes_per_epoch" : 1000,
             "spread_threshold" : wm_spread_thresh,
-            "site_range" : wm_site_range,    
+            "site_range" : wm_site_range,
             "cWaves_path" : cWaves_path,
             "use_C_Waves" : use_C_Waves,
             "snr_radius" : c_waves_radius_sites,
@@ -442,8 +443,8 @@ def createInputJson(
                 "fromStream_list_3A" : fromStream_list_3A,
                 "psth_ex_str": event_ex_param_str,
                 "sort_out_tag": ks_output_tag
-        },  
-                
+        },
+
         "psth_events": {
                 "event_ex_param_str": event_ex_param_str
          }
